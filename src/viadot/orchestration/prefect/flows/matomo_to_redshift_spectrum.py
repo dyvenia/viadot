@@ -12,7 +12,7 @@ from viadot.orchestration.prefect.utils import (
 
 
 @flow(
-    name="Matomo extraction to Redshift Spectrum",
+    name="extract--matomo--to--redshift_sprectrum",
     description="Extract data from Matomo API and load into Redshift Spectrum.",
     retries=1,
     retry_delay_seconds=60,

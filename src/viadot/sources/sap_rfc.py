@@ -5,6 +5,7 @@ from collections import OrderedDict as OrderedDictType
 from collections.abc import Iterable, Iterator
 import logging
 import re
+import time
 from typing import (
     Any,
     ClassVar,
@@ -496,7 +497,7 @@ class SAPRFC(Source):
         if not limit_match:
             return None
 
-        return int(sql[limit_match.span()[1] :].split()[0])
+        return int(sql[limit_match.span()[1] :].split(maxsplit=1)[0])
 
     @staticmethod
     def _get_offset(sql: str) -> int | None:
@@ -505,7 +506,7 @@ class SAPRFC(Source):
         if not offset_match:
             return None
 
-        return int(sql[offset_match.span()[1] :].split()[0])
+        return int(sql[offset_match.span()[1] :].split(maxsplit=1)[0])
 
     def _parse_dates(
         self,
@@ -547,6 +548,7 @@ class SAPRFC(Source):
             )
             raise TypeError(msg)
 
+        self.logger.info(f"Query after dynamic date parsing:\n{query}")
         return processed_sql_or_list
 
     # Holy crap what a mess. TODO: refactor this so it can be even remotely tested...
@@ -573,6 +575,9 @@ class SAPRFC(Source):
         self.extract_values(sql)
 
         table_name = self._get_table_name(sql)
+        self.logger.info(
+            f"Target table: '{table_name}', columns requested: {len(self.select_columns)}"
+        )
         # this has to be called before checking client_side_filters
         where = self.where
         columns = self.select_columns
@@ -648,6 +653,10 @@ class SAPRFC(Source):
         query_json_filtered = {
             key: query_json[key] for key in query_json if query_json[key] is not None
         }
+        self.logger.info(
+            f"Query built for '{table_name}': {len(lists_of_columns)} column chunk(s), "
+            f"limit={limit}, offset={offset}"
+        )
         self._query = query_json_filtered
 
     def call(self, func: str, *args, **kwargs) -> dict[str, Any]:
@@ -714,16 +723,17 @@ class SAPRFC(Source):
             pd.DataFrame: A DataFrame representing the result of the query provided in
                 `PyRFC.query()`.
         """
+        start_time = time.monotonic()
         params = self._query
         sep = self._query.get("DELIMITER")
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
-            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
+            self.logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
         separators = self._get_separators()
 
         for sep in separators:
-            logger.info(f"Checking if separator '{sep}' works.")
+            self.logger.info(f"Checking if separator '{sep}' works.")
             if isinstance(self.rfc_unique_id, list):
                 # Columns only for the first chunk. We add the rest later to avoid name
                 # conflicts.
@@ -734,7 +744,7 @@ class SAPRFC(Source):
             chunk = 1
             row_index = 0
             for fields in fields_lists:
-                logger.info(f"Downloading {chunk} data chunk...")
+                self.logger.info(f"Downloading {chunk} data chunk...")
                 self._query["FIELDS"] = fields
                 try:
                     response = self.call(func, **params)
@@ -745,6 +755,10 @@ class SAPRFC(Source):
                     raise
                 # Check and skip if there is no data returned.
                 if response["DATA"]:
+                    self.logger.info(
+                        f"Chunk {chunk} returned {len(response['DATA'])} raw record(s) "
+                        f"for {len(fields)} column(s) using separator '{sep}'."
+                    )
                     record_key = "WA"
                     data_raw = np.array(response["DATA"])
                     del response
@@ -765,14 +779,19 @@ class SAPRFC(Source):
                         df_tmp = pd.DataFrame(columns=fields)
                         df_tmp[fields] = records
                         df_tmp = self._adjust_whitespaces(df_tmp)
+                        pre_merge_rows = len(df)
                         df = pd.merge(df, df_tmp, on=self.rfc_unique_id, how="outer")
+                        self.logger.info(
+                            f"Merged chunk {chunk} on unique id column(s) "
+                            f"{self.rfc_unique_id}: {pre_merge_rows} -> {len(df)} row(s)."
+                        )
                     elif not start:
                         df[fields] = records
                     else:
                         df[fields] = np.nan
                     chunk += 1
                 elif not response["DATA"]:
-                    logger.warning("No data returned from SAP.")
+                    self.logger.warning("No data returned from SAP.")
         if not df.empty:
             # It is used to filter out columns which are not in select query
             # for example columns passed only as unique column
@@ -790,12 +809,24 @@ class SAPRFC(Source):
                 for col in client_side_filter_cols_aliased
                 if col not in self.select_columns_aliased
             ]
+            if cols_to_drop:
+                self.logger.debug(
+                    f"Dropping helper column(s) used only for filtering: {cols_to_drop}."
+                )
             df.drop(cols_to_drop, axis=1, inplace=True)
         self.close_connection()
 
         if tests:
+            self.logger.info(
+                "Running data validation tests on the resulting DataFrame."
+            )
             validate(df=df, tests=tests)
+            self.logger.info("Data validation tests passed.")
 
+        elapsed_time = time.monotonic() - start_time
+        self.logger.info(
+            f"to_df() finished in {elapsed_time:.2f}s: final shape {df.shape}."
+        )
         return df
 
     def split_wa_records(
@@ -944,7 +975,7 @@ class SAPRFC(Source):
         columns_aliased = self.select_columns_aliased
         fields_lists = self._query.get("FIELDS")
         if len(fields_lists) > 1:
-            logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
+            self.logger.info(f"Data will be downloaded in {len(fields_lists)} chunks.")
         func = self.func
         separators = self._get_separators()
 
@@ -959,7 +990,7 @@ class SAPRFC(Source):
 
         # Try each separator until we successfully parse the data
         for sep in separators:
-            logger.info(f"Checking if separator '{sep}' works.")
+            self.logger.info(f"Checking if separator '{sep}' works.")
             self._query["DELIMITER"] = sep
 
             # Initialize storage for this attempt
@@ -1095,8 +1126,23 @@ class SAPRFC(Source):
         Returns:
             pa.Table: The results as an Arrow table.
         """
+        start_time = time.monotonic()
         rows = self.to_records()
         table = pa.Table.from_pylist(rows)
+        elapsed_time = time.monotonic() - start_time
+
+        if table.num_rows > 0:
+            size_mb = table.nbytes / (1024 * 1024)
+            self.logger.info(
+                f"Data downloaded successfully in {elapsed_time:.2f}s: "
+                f"{table.num_rows} rows, {table.num_columns} columns, "
+                f"{size_mb:.2f} MB."
+            )
+            self.logger.info(f"Arrow schema: {table.schema}")
+        else:
+            self.logger.warning(
+                f"Query finished in {elapsed_time:.2f}s but no rows were returned."
+            )
         if tests:
             validate(df=table.to_pandas(), tests=tests)
         return table

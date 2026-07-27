@@ -7,6 +7,7 @@ import zipfile
 import pendulum
 from pydantic import SecretStr
 import pytest
+import smbprotocol.exceptions
 
 from viadot.exceptions import CredentialError
 from viadot.sources import SMB
@@ -151,6 +152,74 @@ def test_scan_and_store_basic(smb_instance, mock_smb_dir_entry_file):
         assert len(result_dict) == 1, f"Expected 1 file, got {len(result_dict)}"
         assert mock_smb_dir_entry_file.paths in result_dict
         assert result_dict[mock_smb_dir_entry_file.paths] == mock_file_content
+
+
+def test_fetch_and_store_reads_known_paths(smb_instance):
+    file_path = f"{SERVER_PATH}/report.xlsx"
+    expected_content = b"Excel content"
+
+    with patch.object(
+        smb_instance, "_read_file_content_from_path"
+    ) as mock_read_content:
+        mock_read_content.return_value = {"report.xlsx": expected_content}
+
+        result_dict, result_list = smb_instance.fetch_and_store(file_paths=[file_path])
+
+        mock_read_content.assert_called_once_with(
+            file_path=file_path,
+            prefix_levels_to_add=0,
+            zip_inner_file_regexes=None,
+        )
+        assert result_dict == {"report.xlsx": expected_content}
+        assert result_list == []
+
+
+def test_fetch_and_store_skips_temp_files(smb_instance):
+    temp_file_path = f"{SERVER_PATH}/~$report.xlsx"
+
+    with patch.object(
+        smb_instance, "_read_file_content_from_path"
+    ) as mock_read_content:
+        result_dict, result_list = smb_instance.fetch_and_store(
+            file_paths=[temp_file_path]
+        )
+
+        mock_read_content.assert_not_called()
+        assert result_dict == {}
+        assert result_list == [temp_file_path]
+
+
+def test_fetch_and_store_handles_missing_file(smb_instance):
+    file_path = f"{SERVER_PATH}/missing.xlsx"
+
+    with patch.object(
+        smb_instance, "_read_file_content_from_path"
+    ) as mock_read_content:
+        mock_read_content.side_effect = smbprotocol.exceptions.SMBOSError(
+            ntstatus=0xC0000034,
+            filename=file_path,
+        )
+
+        result_dict, result_list = smb_instance.fetch_and_store(file_paths=[file_path])
+
+        assert result_dict == {}
+        assert result_list == [file_path]
+
+
+def test_read_file_content_from_path_delegates_to_open_file(
+    smb_instance, mock_smb_dir_entry_file
+):
+    mock_entry = mock_smb_dir_entry_file
+    mock_entry.path = f"{SERVER_PATH}/test_file.txt"
+    expected_content = b"File content"
+
+    with patch(
+        "smbclient.open_file", mock_open(read_data=expected_content)
+    ) as mock_file:
+        result = smb_instance._read_file_content_from_path(mock_entry.path)
+
+        assert result == {"test_file.txt": expected_content}
+        mock_file.assert_called_once_with(mock_entry.path, mode="rb")
 
 
 def test_scan_directories_recursive_search(

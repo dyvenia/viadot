@@ -156,6 +156,59 @@ class SMB(Source):
             zip_inner_file_regexes=zip_inner_file_regexes,
         )
 
+    def fetch_and_store(
+        self,
+        file_paths: list[str],
+        prefix_levels_to_add: int = 0,
+        zip_inner_file_regexes: str | list[str] | None = None,
+    ) -> tuple[dict[str, bytes], list[str]]:
+        """Read known SMB file paths and store their contents in memory.
+
+        Unlike ``scan_and_store``, this method does not traverse directories.
+        Each path in ``file_paths`` is read directly, which is suitable when
+        file locations are already known (e.g. from SQL or an explicit list).
+
+        Args:
+            file_paths (list[str]): Full SMB paths to files that should be read.
+            prefix_levels_to_add (int, optional): Number of parent folder levels to
+                include as a prefix to the filename, counting from the deepest
+                (closest) folder upwards. Defaults to 0, meaning no prefix is added.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
+
+        Returns:
+            tuple[dict[str, bytes], list[str]]:
+            - A dictionary mapping file paths to their contents in bytes.
+            - A list of file paths that were skipped or failed to be read.
+        """
+        found_files: dict[str, bytes] = {}
+        problematic_entries: list[str] = []
+
+        for file_path in file_paths:
+            file_name = Path(file_path.replace("\\", "/")).name
+            if file_name.startswith("~$"):
+                problematic_entries.append(file_path)
+                continue
+
+            try:
+                found_files.update(
+                    self._read_file_content_from_path(
+                        file_path=file_path,
+                        prefix_levels_to_add=prefix_levels_to_add,
+                        zip_inner_file_regexes=zip_inner_file_regexes,
+                    )
+                )
+            except smbprotocol.exceptions.SMBOSError as e:
+                self.logger.warning(f"File not found: {file_path} — {e}")
+                problematic_entries.append(file_path)
+            except Exception:
+                self.logger.exception(f"Error reading file {file_path}.")
+                raise
+
+        return found_files, problematic_entries
+
     def _scan_directories(
         self,
         paths: list[str],
@@ -330,7 +383,36 @@ class SMB(Source):
             dict[str, bytes]: Dictionary with file name(s) as keys and content
                 as values.
         """
-        file_path = entry.path
+        return self._read_file_content_from_path(
+            file_path=entry.path,
+            prefix_levels_to_add=prefix_levels_to_add,
+            zip_inner_file_regexes=zip_inner_file_regexes,
+        )
+
+    def _read_file_content_from_path(
+        self,
+        file_path: str,
+        prefix_levels_to_add: int = 0,
+        zip_inner_file_regexes: str | list[str] | None = None,
+    ) -> dict[str, bytes]:
+        """Read file content from a known SMB path.
+
+        For ZIP files, extracts files matching the zip_inner_file_regexes pattern.
+        For other files, reads the entire content.
+
+        Args:
+            file_path (str): Full SMB path to the file.
+            prefix_levels_to_add (int): Number of parent folder levels to include
+                as prefix.
+            zip_inner_file_regexes (str | list[str] | None): Regular expression string
+                or list of regex patterns used to filter files *inside* ZIP archives.
+                If provided, ZIP files will be unpacked and only matching inner files
+                will be extracted and stored. Defaults to None.
+
+        Returns:
+            dict[str, bytes]: Dictionary with file name(s) as keys and content
+                as values.
+        """
         contents = {}
 
         self.logger.info(f"Found: {file_path}")
