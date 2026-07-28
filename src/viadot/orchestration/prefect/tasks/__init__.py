@@ -42,6 +42,7 @@ from .postgresql import (
     postgresql_query,
     postgresql_to_df,
 )
+from .power_bi_df import power_bi_activity_events_to_df
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .salesforce import salesforce_to_df
@@ -99,6 +100,7 @@ __all__ = [
     "perspective_ingest_task",
     "postgresql_query",
     "postgresql_to_df",
+    "power_bi_activity_events_to_df",
     "s3_upload_file",
     "salesforce_to_df",
     "sap_bw_to_df",
