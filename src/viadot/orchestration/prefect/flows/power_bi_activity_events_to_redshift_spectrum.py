@@ -51,7 +51,7 @@ def power_bi_activity_events_to_redshift_spectrum(  # noqa: PLR0913
     compression: str | None = None,
     aws_sep: str = ",",
     aws_config_key: str | None = None,
-    credentials_secret: str | None = Noffffffffffffffne,
+    credentials_secret: str | None = None,
     power_bi_credential_secret: str | None = None,
 ) -> None:
     """Fetch Power BI activity events and load them into Redshift Spectrum.
