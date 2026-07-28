@@ -1,0 +1,104 @@
+"""Flow for fetching Power BI activity events and loading them into Redshift Spectrum."""
+
+import pandas as pd
+from prefect import flow, task
+from prefect.logging import get_run_logger
+
+from viadot.orchestration.prefect.tasks import (
+    df_to_redshift_spectrum,
+    power_bi_activity_events_to_df,
+)
+from viadot.orchestration.prefect.utils import (
+    with_flow_timeout_param,
+    with_state_tracking_and_downstream_triggering,
+)
+
+
+@task
+def log_df_schema(df: pd.DataFrame, name: str = "log_df_schema") -> pd.DataFrame:
+    """Log the shape and dtypes of a DataFrame, and identify any nested columns.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to log.
+        name (str): Name to use in the log messages. Defaults to "log_df_schema".
+
+    Returns:
+        pd.DataFrame: The same DataFrame that was passed in.
+    """
+    logger = get_run_logger()
+    logger.info(f"{name} shape={df.shape}")
+    logger.info(f"{name} dtypes:\n{df.dtypes.to_string()}")
+    nested = [
+        c for c in df.columns if df[c].map(lambda v: isinstance(v, dict | list)).any()
+    ]
+    logger.warning(f"{name} nested columns (dict/list): {nested}")
+    return df
+
+
+@flow(name="power_bi_activity_events_to_redshift_spectrum")
+@with_flow_timeout_param()
+@with_state_tracking_and_downstream_triggering(node_name_param="table")
+def power_bi_activity_events_to_redshift_spectrum(  # noqa: PLR0913
+    date: str | None = None,
+    to_path: str | None = None,
+    schema_name: str | None = None,
+    table: str | None = None,
+    extension: str = ".parquet",
+    if_exists: Literal["overwrite", "append", "skip"] = "overwrite",
+    partition_cols: list[str] | None = None,
+    compression: str | None = None,
+    aws_sep: str = ",",
+    aws_config_key: str | None = None,
+    credentials_secret: str | None = None,
+    power_bi_credential_secret: str | None = None,
+) -> None:
+    """Fetch Power BI activity events and load them into Redshift Spectrum.
+
+    Args:
+        date (str, Optional): date string 'YYYY-MM-DD' (UTC day to extract).
+        to_path (str | None, optional): S3 destination path, e.g. 's3://my-bucket/powerbi/issues/'.
+                Defaults to None.
+        schema_name (str | None, optional): Redshift Spectrum schema name.
+                Defaults to None.
+        table (str | None, optional): Target table name. Defaults to None.
+        extension (str): File extension for the output files. Defaults to '.parquet'.
+        if_exists (Literal["overwrite", "append", "skip"], optional): Behaviour
+                when the table already exists. Defaults to 'overwrite'.
+        partition_cols (list[str] | None): Columns to partition the output by.
+                Defaults to None.
+        compression (str | None, optional): Compression codec, e.g. 'snappy'.
+                Defaults to None.
+        aws_sep (str, optional): CSV separator (used when extension is 'csv').
+                Defaults to ','.
+        aws_config_key (str, optional): The key in the viadot config holding relevant
+            AWS credentials. Defaults to None.
+        credentials_secret (str | None, optional): Name of the AWS secret
+                in the secrets manager. Defaults to None.
+        power_bi_credential_secret (str | None, optional): Name of the AWS secret
+                containing Power BI credentials. Defaults to None.
+
+    Returns:
+        None: This flow does not return any value.
+    """
+    logger = get_run_logger()
+    df = power_bi_activity_events_to_df(
+        date=date, credentials_secret=power_bi_credential_secret
+    )
+    logger.info(f"Fetched {len(df)} rows from Power BI API.")
+    df = log_df_schema(df)
+
+    logger.info("Loading data into Redshift Spectrum.")
+
+    df_to_redshift_spectrum(
+        df=df,
+        to_path=to_path,
+        schema_name=schema_name,
+        table=table,
+        extension=extension,
+        if_exists=if_exists,
+        partition_cols=partition_cols,
+        compression=compression,
+        sep=aws_sep,
+        config_key=aws_config_key,
+        credentials_secret=credentials_secret,
+    )
