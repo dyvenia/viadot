@@ -54,6 +54,14 @@ class PowerBiAuth:
 
 
 class PowerBIActivityEvents(PowerBiAuth, Source):
+    """Power BI Admin - Activity Events source.
+
+    Args:
+        config_key: key in local viadot config with tenant_id/client_id/
+            client_secret.
+        credentials: credentials dict, alternative to config_key.
+    """
+
     @staticmethod
     def build_url(date: str) -> str:
         return (
