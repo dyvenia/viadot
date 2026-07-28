@@ -1,9 +1,11 @@
 """Build specified dbt model(s) and upload the generated metadata to Luma."""
 
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 import re
 import shutil
+import tempfile
 from typing import Any
 
 from prefect import flow, task
@@ -25,6 +27,27 @@ from viadot.orchestration.prefect.utils import (
     with_flow_timeout_param,
     with_state_tracking_and_downstream_triggering,
 )
+
+
+def _build_dbt_git_env(git_repo_token_secret: str | None = None) -> dict[str, str]:
+    git_token = get_credentials(git_repo_token_secret)
+
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+
+    if not git_token:
+        return env
+
+    with tempfile.NamedTemporaryFile("w", delete=False) as fh:
+        fh.write(f'[url "https://{git_token}@github.com/"]\n')
+        fh.write("    insteadOf = https://github.com/\n")
+        fh.write(f'[url "https://{git_token}@gitlab.com/"]\n')
+        fh.write("    insteadOf = https://gitlab.com/\n")
+        fh.flush()
+        config_path = fh.name
+
+    env["GIT_CONFIG_GLOBAL"] = config_path
+    return env
 
 
 @task(cache_policy=None)
@@ -364,6 +387,7 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
     )
 
     # Prepare the environment.
+    dbt_env = _build_dbt_git_env(dbt_repo_token_secret)
     dbt_repo_name = dbt_repo_url_value.split("/")[-1].replace(".git", "")
     dbt_project_path_full = Path(dbt_repo_name) / dbt_project_path
     dbt_pull_deps_task = dbt_task.with_options(
@@ -375,6 +399,7 @@ def transform_and_catalog(  # noqa: PLR0913 | Complexity complaints - should be 
     pull_dbt_deps = dbt_pull_deps_task.submit(
         project_path=dbt_project_path_full,
         command="deps",
+        env=dbt_env,
     )
     pull_dbt_deps.result()
 
