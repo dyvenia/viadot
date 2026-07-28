@@ -22,6 +22,7 @@ def power_bi_activity_events_to_df(
     credentials: dict[str, Any] | None = None,
     config_key: str = "power_bi",
     credentials_secret: str | None = None,
+    columns_to_extract: list[str] | None = None,
 ) -> pd.DataFrame:
     """Download activity events for a day into a pandas DataFrame.
 
@@ -33,6 +34,7 @@ def power_bi_activity_events_to_df(
             config. Defaults to "power_bi".
         credentials_secret (str, optional): Name of the AWS secret containing
             Power BI credentials. Defaults to None.
+        columns_to_extract (list(str)): List of columns to extract. Defaults to None.
 
     Returns:
         pd.DataFrame: Flat DataFrame with Power BI activity events.
@@ -46,5 +48,6 @@ def power_bi_activity_events_to_df(
     source = PowerBIActivityEvents(
         credentials=PowerBICredentials(**credentials),
         config_key=config_key,
+        columns_to_extract=columns_to_extract,
     )
     return source.to_df(date=date)

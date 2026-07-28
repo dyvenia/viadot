@@ -21,11 +21,7 @@ class PowerBICredentials(BaseModel):
 
 class PowerBiAuth:
     def __init__(
-        self,
-        credentials: PowerBICredentials,
-        config_key: str | None = "powerbi",
-        *args,
-        **kwargs: str | int | bool,
+        self, credentials: PowerBICredentials, config_key: str | None = "powerbi"
     ) -> None:
         raw_creds = credentials or get_source_credentials(config_key)
         if isinstance(raw_creds, PowerBICredentials):
@@ -60,7 +56,21 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
         config_key: key in local viadot config with tenant_id/client_id/
             client_secret.
         credentials: credentials dict, alternative to config_key.
+        columns_to_extract (list(str)): List of columns to extract. Defaults to None.
     """
+
+    def __init__(
+        self,
+        *args,
+        credentials: PowerBICredentials | None = None,
+        config_key: str | None = "powerbi",
+        columns_to_extract: list[str] | None = None,
+        **kwargs: str | int | bool,
+    ) -> None:
+        super().__init__(
+            *args, credentials=credentials, config_key=config_key, **kwargs
+        )
+        self.columns_to_extract = columns_to_extract
 
     @staticmethod
     def build_url(date: str) -> str:
@@ -93,7 +103,15 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
 
             response.raise_for_status()
             body = response.json()
-            records.extend(body.get("activityEventEntities", []))
+            events = body.get("activityEventEntities", [])
+
+            if self.columns_to_extract:
+                events = [
+                    {col: event.get(col) for col in self.columns_to_extract}
+                    for event in events
+                ]
+            records.extend(events)
+
             url = body.get("continuationUri")
 
         return records

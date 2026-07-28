@@ -53,6 +53,7 @@ def power_bi_activity_events_to_redshift_spectrum(  # noqa: PLR0913
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
     power_bi_credential_secret: str | None = None,
+    columns_to_extract: list[str] | None = None,
 ) -> None:
     """Fetch Power BI activity events and load them into Redshift Spectrum.
 
@@ -78,13 +79,16 @@ def power_bi_activity_events_to_redshift_spectrum(  # noqa: PLR0913
                 in the secrets manager. Defaults to None.
         power_bi_credential_secret (str | None, optional): Name of the AWS secret
                 containing Power BI credentials. Defaults to None.
+        columns_to_extract (list(str)): List of columns to extract. Defaults to None.
 
     Returns:
         None: This flow does not return any value.
     """
     logger = get_run_logger()
     df = power_bi_activity_events_to_df(
-        date=date, credentials_secret=power_bi_credential_secret
+        date=date,
+        columns_to_extract=columns_to_extract,
+        credentials_secret=power_bi_credential_secret,
     )
     logger.info(f"Fetched {len(df)} rows from Power BI API.")
     df = log_df_schema(df)
