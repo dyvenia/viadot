@@ -42,6 +42,48 @@ def slugify(name: str) -> str:
     return name.replace(" ", "_").lower()
 
 
+class LoggingRetry(Retry):
+    def __init__(
+        self,
+        *args,
+        log_statuses: set[int] | None = None,
+        logger_: logging.Logger | None = None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.log_statuses = log_statuses  # None = log all statuses
+        self.logger_ = logger_ or logging.getLogger(__name__)
+
+    def increment(
+        self,
+        method=None,
+        url=None,
+        response=None,
+        error=None,
+        _pool=None,
+        _stacktrace=None,
+    ):
+        if response is not None and (
+            self.log_statuses is None or response.status in self.log_statuses
+        ):
+            retry_after = response.headers.get("Retry-After", "none")
+            self.logger_.warning(
+                f"Retry: {method} {url} -> status={response.status} "
+                f"(Retry-After={retry_after})"
+            )
+        elif error is not None:
+            self.logger_.warning(f"Retry: {method} {url} -> error: {error}")
+
+        return super().increment(
+            method=method,
+            url=url,
+            response=response,
+            error=error,
+            _pool=_pool,
+            _stacktrace=_stacktrace,
+        )
+
+
 def handle_api_request(
     url: str,
     auth: tuple | None = None,
@@ -73,7 +115,7 @@ def handle_api_request(
         requests.Response: The HTTP response object.
     """
     session = requests.Session()
-    retry_strategy = Retry(
+    retry_strategy = LoggingRetry(
         total=3,
         status_forcelist=[429, 500, 502, 503, 504],
         backoff_factor=1,
