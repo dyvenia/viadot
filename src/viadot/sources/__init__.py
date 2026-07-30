@@ -22,7 +22,7 @@ from .mindful import Mindful
 from .onestream import OneStream
 from .outlook import Outlook
 from .postgres import PostgreSQL
-from .power_bi import PowerBIActivityEvents
+from .power_bi import PowerBIActivityEvents, PowerBiReportParser, PowerBiReportScanner
 from .salesforce import Salesforce
 from .sftp import Sftp
 from .sharepoint import Sharepoint, SharepointList
@@ -59,6 +59,8 @@ __all__ = [
     "Outlook",
     "PostgreSQL",
     "PowerBIActivityEvents",
+    "PowerBiReportParser",
+    "PowerBiReportScanner",
     "SMBClient",
     "SQLServer",
     "SQLite",
