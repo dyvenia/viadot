@@ -42,7 +42,13 @@ from .postgresql import (
     postgresql_query,
     postgresql_to_df,
 )
-from .power_bi_df import power_bi_activity_events_to_df
+from .power_bi_activity_events_to_df import power_bi_activity_events_to_df
+from .power_bi_report_scanner_to_dfs import (
+    fetch_scan_results,
+    get_modified_workspace_ids,
+    get_scan_ids,
+    parse_scan_results,
+)
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .salesforce import salesforce_to_df
@@ -85,7 +91,10 @@ __all__ = [
     "epicor_to_df",
     "eurostat_to_df",
     "exchange_rates_to_df",
+    "fetch_scan_results",
     "genesys_to_df",
+    "get_modified_workspace_ids",
+    "get_scan_ids",
     "hubspot_to_df",
     "informix_query",
     "informix_to_df",
@@ -97,6 +106,7 @@ __all__ = [
     "onestream_run_data_management_seq",
     "onestream_to_df",
     "outlook_to_df",
+    "parse_scan_results",
     "perspective_ingest_task",
     "postgresql_query",
     "postgresql_to_df",
