@@ -27,11 +27,27 @@ class PowerBICredentials(BaseModel):
 
 
 class PowerBiAuth:
+    """Handle authentication for the Power BI API.
+
+    Manages retrieval and storage of credentials required to obtain
+    an access token for Power BI.
+    """
+
     def __init__(
         self,
         credentials: PowerBICredentials | None = None,
         credential_secret: str | None = None,
     ) -> None:
+        """Initialize the PowerBiAuth instance.
+
+        Args:
+            credentials (PowerBICredentials, optional): Power BI credentials
+                to use for authentication. If not provided, credentials will
+                be retrieved using `credential_secret`. Defaults to None.
+            credential_secret (str, optional): The name of the secret to use
+                for retrieving credentials, if `credentials` is not provided.
+                Defaults to None.
+        """
         raw_creds = credentials or get_credentials(credential_secret)
         if isinstance(raw_creds, PowerBICredentials):
             self.credentials = dict(raw_creds)
@@ -40,8 +56,16 @@ class PowerBiAuth:
 
         self._token: str | None = None
 
-    def _get_token(self) -> str:
-        """Authenticate against Azure AD, cache the token for reuse."""
+    def _get_token(self) -> str | None:
+        """Authenticate against Azure AD and cache the token for reuse.
+
+        If a token has already been retrieved, it is returned from cache
+        instead of requesting a new one.
+
+        Returns:
+            str | None: The access token used for authenticating requests
+                to the Power BI API.
+        """
         if self._token:
             return self._token
 
@@ -52,13 +76,18 @@ class PowerBiAuth:
             "client_secret": self.credentials["client_secret"],
             "scope": "https://analysis.windows.net/powerbi/api/.default",
         }
-        response = requests.post(url, data=payload, timeout=30)
-        response.raise_for_status()
+        response = handle_api_response(url, method="POST", data=json.dumps(payload))
         self._token = response.json()["access_token"]
         return self._token
 
     @property
     def headers(self) -> dict[str, str]:
+        """Build the authorization headers for Power BI API requests.
+
+        Returns:
+            dict[str, str]: A dictionary containing the `Authorization`
+                header with a valid Bearer token.
+        """
         return {"Authorization": f"Bearer {self._get_token()}"}
 
 
@@ -79,11 +108,32 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
         columns_to_extract: list[str] | None = None,
         **kwargs: str | int | bool,
     ) -> None:
+        """Initialize the PowerBIActivityEvents source.
+
+        Args:
+            *args: Positional arguments passed to the parent classes.
+            credentials (PowerBICredentials, optional): Power BI credentials
+                to use for authentication. Defaults to None.
+            columns_to_extract (list[str], optional): List of columns to
+                extract from the activity events response. Defaults to None.
+            **kwargs (str | int | bool): Keyword arguments passed to the
+                parent classes.
+        """
         super().__init__(*args, credentials=credentials, **kwargs)
         self.columns_to_extract = columns_to_extract
 
     @staticmethod
     def build_url(date: str) -> str:
+        """Build the Power BI Admin Activity Events API URL for a given day.
+
+        Args:
+            date (str): The date, in `YYYY-MM-DD` format, for which to
+                retrieve activity events.
+
+        Returns:
+            str: The full URL for querying activity events for the given
+                date, spanning from 00:00:00.000 to 23:59:59.999.
+        """
         return (
             "https://api.powerbi.com/v1.0/myorg/admin/activityevents"
             f"?startDateTime='{date}T00:00:00.000'"
@@ -94,7 +144,7 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
         """Fetch all activity events for a single UTC day, handling pagination.
 
         Args:
-            date: date string 'YYYY-MM-DD' (UTC day to extract).
+            date (str): date string 'YYYY-MM-DD' (UTC day to extract).
 
         Returns:
             list[dict]: raw activity event records.
@@ -135,6 +185,9 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
         Args:
             date: 'YYYY-MM-DD' UTC day to extract. Defaults to yesterday (UTC).
             if_empty: behavior when no events are returned.
+
+        Returns:
+            pd.DataFrame: Dataframe with processed events.
         """
         if date is None:
             date = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -185,6 +238,25 @@ DEFAULT_GET_INFO_QUERY_PARAMS: dict[str, bool] = {
 
 
 class PowerBiReportScanner(PowerBiAuth, Source):
+    """Power BI Admin - Report Scanner source.
+
+    Scans Power BI workspaces using the Admin Metadata Scanning API:
+    detects recently modified workspaces, triggers scans for their
+    metadata, waits for the scans to complete, and retrieves the
+    resulting scan data.
+
+    Args:
+        credentials: credentials dict, alternative to config_key.
+        credential_secret: key in local viadot config with tenant_id/
+            client_id/client_secret.
+        get_info_query_params (dict[str, bool], optional): Query parameters
+            passed to the workspace `getInfo` endpoint (e.g. flags to
+            include datasets, dataflows, etc.). Defaults to
+            `DEFAULT_GET_INFO_QUERY_PARAMS`.
+        logger (logging.Logger, optional): Logger instance to use.
+            Defaults to a module-level logger.
+    """
+
     def __init__(
         self,
         *args,
@@ -194,6 +266,23 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         logger: logging.Logger | None = None,
         **kwargs: str | int | bool,
     ) -> None:
+        """Initialize the PowerBiReportScanner source.
+
+        Args:
+            *args: Positional arguments passed to the parent classes.
+            credentials (PowerBICredentials, optional): Power BI credentials
+                to use for authentication. Defaults to None.
+            credential_secret (str, optional): The name of the secret to use
+                for retrieving credentials, if `credentials` is not provided.
+                Defaults to None.
+            get_info_query_params (dict[str, bool], optional): Query
+                parameters passed to the workspace `getInfo` endpoint.
+                Defaults to `DEFAULT_GET_INFO_QUERY_PARAMS`.
+            logger (logging.Logger, optional): Logger instance to use for
+                logging scan progress. Defaults to a module-level logger.
+            **kwargs (str | int | bool): Keyword arguments passed to the
+                parent classes.
+        """
         self.get_info_query_params = (
             get_info_query_params or DEFAULT_GET_INFO_QUERY_PARAMS
         )
@@ -207,7 +296,21 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         self.logger = logger or logging.getLogger(__name__)
         self.logger.info("PowerBiReportScanner initialized.")
 
-    def get_modified_workspaces(self, target_date: str | None = None):
+    def get_modified_workspaces(self, target_date: str | None = None) -> list[str]:
+        """Retrieve IDs of workspaces modified since the given date.
+
+        Args:
+            target_date (str, optional): The date, in `YYYY-MM-DD` format,
+                since which to look for modified workspaces. Defaults to
+                None, in which case yesterday's date (UTC) is used.
+
+        Raises:
+            ValueError: If `target_date` is not in `YYYY-MM-DD` format.
+
+        Returns:
+            list[str]: A list of IDs of workspaces modified since
+                `target_date`, excluding personal and inactive workspaces.
+        """
         url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified"
         if target_date is None:
             target_date = (datetime.now(timezone.utc) - timedelta(days=1)).strftime(
@@ -238,10 +341,34 @@ class PowerBiReportScanner(PowerBiAuth, Source):
 
     @staticmethod
     def chunk_list(input_list: list, size: int = 100) -> Generator[list, Any, Any]:
+        """Split a list into chunks of a given size.
+
+        Args:
+            input_list (list): The list to split into chunks.
+            size (int, optional): The maximum size of each chunk. Defaults
+                to 100.
+
+        Yields:
+            list: Successive chunks of `input_list`, each of length at
+                most `size`.
+        """
         for i in range(0, len(input_list), size):
             yield input_list[i : i + size]
 
     def get_workspaces_info(self, workspace_ids: list[str]) -> list[str]:
+        """Trigger metadata scans for the given workspaces.
+
+        Workspace IDs are submitted to the Admin `getInfo` endpoint in
+        chunks (to respect API limits), and a scan ID is returned for
+        each submitted chunk.
+
+        Args:
+            workspace_ids (list[str]): The IDs of the workspaces to scan.
+
+        Returns:
+            list[str]: A list of scan IDs, one per submitted chunk of
+                workspace IDs.
+        """
         scan_ids: list[str] = []
         for chunk in self.chunk_list(workspace_ids):
             url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces/getInfo"
@@ -258,6 +385,22 @@ class PowerBiReportScanner(PowerBiAuth, Source):
     def wait_for_scan(
         self, scan_id: str, timeout: int = 300, interval: int = 15
     ) -> bool:
+        """Poll the scan status endpoint until a scan finishes or times out.
+
+        Args:
+            scan_id (str): The ID of the scan to wait for.
+            timeout (int, optional): The maximum time, in seconds, to wait
+                for the scan to complete. Defaults to 300.
+            interval (int, optional): The time, in seconds, to wait between
+                consecutive status checks. Defaults to 15.
+
+        Raises:
+            TimeoutError: If the scan does not complete within `timeout`
+                seconds.
+
+        Returns:
+            bool: True if the scan succeeded, False if the scan failed.
+        """
         status_url = (
             f"https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanStatus/{scan_id}"
         )
@@ -277,6 +420,20 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         raise TimeoutError(f"Scan {scan_id} timed out")
 
     def fetch_report_scan(self, scan_ids: list[str]):
+        """Wait for scans to complete and fetch their results.
+
+        For each scan ID, waits until the scan finishes (via
+        `wait_for_scan`) and then retrieves the corresponding scan
+        result.
+
+        Args:
+            scan_ids (list[str]): The IDs of the scans to fetch results
+                for.
+
+        Returns:
+            list[dict]: A list of scan result payloads, one per scan ID,
+                in the same order as `scan_ids`.
+        """
         all_results = []
         for scan_id in scan_ids:
             self.wait_for_scan(scan_id)
@@ -309,6 +466,22 @@ class PowerBiReportParser:
         owner_mapping: dict | None = None,
         target_date: str | None = None,
     ) -> None:
+        """Initialize the PowerBiReportParser.
+
+        Args:
+            report_mapping (dict, optional): Mapping of target column names
+                to nested paths within a report object. Defaults to
+                `REPORT_FIELD_MAPPING`.
+            workspace_mapping (dict, optional): Mapping of target column
+                names to nested paths within a workspace object. Defaults
+                to `WORKSPACE_FIELD_MAPPING`.
+            owner_mapping (dict, optional): Mapping of target column names
+                to nested paths within a report user object. Defaults to
+                `OWNER_FIELD_MAPPING`.
+            target_date (str, optional): The date, in `YYYY-MM-DD` format,
+                to stamp parsed records with. Defaults to yesterday's date
+                (UTC).
+        """
         self.report_mapping = report_mapping or REPORT_FIELD_MAPPING
         self.workspace_mapping = workspace_mapping or WORKSPACE_FIELD_MAPPING
         self.owner_mapping = owner_mapping or OWNER_FIELD_MAPPING
@@ -316,8 +489,20 @@ class PowerBiReportParser:
             datetime.now(timezone.utc) - timedelta(days=1)
         ).strftime("%Y-%m-%d")
 
-    def get_nested(self, obj: dict, path: str, default=None):
-        """Pulls data from nested dict by provided patch."""
+    def get_nested(self, obj: dict, path: str, default=None) -> Any:
+        """Pulls data from nested dict by provided patch.
+
+        Args:
+            obj (dict): The dictionary to traverse.
+            path (str): A dot-separated path of keys, e.g. `"a.b.c"`.
+            default (Any, optional): The value to return if the path
+                cannot be resolved. Defaults to None.
+
+        Returns:
+            Any: The value found at `path`, or `default` if any key in
+                the path is missing or an intermediate value is not a
+                dict.
+        """
         current = obj
         for key in path.split("."):
             if isinstance(current, dict):
@@ -334,7 +519,30 @@ class PowerBiReportParser:
         owner_mapping: dict = OWNER_FIELD_MAPPING,
         owner_access_right_value: str = OWNER_ACCESS_RIGHT_VALUE,
     ) -> tuple[list[dict], list[dict]]:
+        """Parse reports and report owners out of raw scan results.
 
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+            report_mapping (dict, optional): Mapping of target column
+                names to nested paths within a report object. Defaults to
+                `REPORT_FIELD_MAPPING`.
+            workspace_mapping (dict, optional): Mapping of target column
+                names to nested paths within a workspace object. Defaults
+                to `WORKSPACE_FIELD_MAPPING`.
+            owner_mapping (dict, optional): Mapping of target column names
+                to nested paths within a report user object. Defaults to
+                `OWNER_FIELD_MAPPING`.
+            owner_access_right_value (str, optional): The value of
+                `reportUserAccessRight` that identifies a user as the
+                report's owner. Defaults to `OWNER_ACCESS_RIGHT_VALUE`.
+
+        Returns:
+            tuple[list[dict], list[dict]]: A tuple of `(reports,
+                reports_owners)`, where `reports` is a list of flattened
+                report records and `reports_owners` is a list of report
+                owner records.
+        """
         reports: list[dict] = []
         reports_owners: list[dict] = []
 
@@ -370,6 +578,16 @@ class PowerBiReportParser:
         return reports, reports_owners
 
     def parse_datasource_instances(self, scan_results: list[dict]) -> list:
+        """Parse datasource instances out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of datasource instance records, each with
+                `Connection_id`, `Connection_desc`, and `Connection_type`.
+        """
         datasource_instances = []
         for result in scan_results:
             for ds_instance in result.get("datasourceInstances", []):
@@ -390,6 +608,18 @@ class PowerBiReportParser:
         return datasource_instances
 
     def parse_dataflows(self, scan_results: list[dict]) -> list:
+        """Parse dataflows out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of dataflow records, each with
+                `Dataflow_id`, `Dataflow_desc`, `Workspace_id`,
+                `Configured_by`, `Modified_by`, `Modified_date`, and
+                `Target_date`.
+        """
         dataflows = []
         for result in scan_results:
             for ws in result.get("workspaces", []):
@@ -408,6 +638,17 @@ class PowerBiReportParser:
         return dataflows
 
     def parse_dataflow_datasource_links(self, scan_results: list[dict]) -> list[dict]:
+        """Parse dataflow-to-datasource links out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of link records, each with `Dataflow_id`
+                and `Connection_id`, mapping dataflows to the datasource
+                instances they use.
+        """
         links = []
         for result in scan_results:
             for ws in result.get("workspaces", []):
@@ -422,6 +663,17 @@ class PowerBiReportParser:
         return links
 
     def parse_dataset_datasource_links(self, scan_results: list[dict]) -> list[dict]:
+        """Parse dataset-to-datasource links out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of link records, each with
+                `Semantic_model_id` and `Connection_id`, mapping datasets
+                to the datasource instances they use.
+        """
         links = []
         for result in scan_results:
             for ws in result.get("workspaces", []):
@@ -436,7 +688,20 @@ class PowerBiReportParser:
         return links
 
     def to_df(self, scan_results: list[dict]) -> dict[str, pd.DataFrame]:
-        """Convenience method running all parsers in one go, returning DataFrames."""
+        """Convenience method running all parsers in one go, returning DataFrames.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            dict[str, pd.DataFrame]: A dictionary mapping each table name
+                in `TABLE_NAMES` to its corresponding parsed DataFrame
+                (`reports`, `reports_owners`, `datasource_instances`,
+                `dataflows`, `dataflow_datasource_links`, and
+                `dataset_datasource_links`).
+
+        """
         reports, reports_owners = self.parse_scan_results(scan_results)
         return {
             "reports": pd.DataFrame(reports),
