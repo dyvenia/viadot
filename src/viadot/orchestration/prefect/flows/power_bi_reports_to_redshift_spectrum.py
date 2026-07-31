@@ -10,11 +10,21 @@ from viadot.orchestration.prefect.tasks import (
     get_scan_ids,
     parse_scan_results,
 )
+from viadot.orchestration.prefect.utils import (
+    with_flow_timeout_param,
+    with_state_tracking_and_downstream_triggering,
+)
 from viadot.sources import PowerBiReportParser, PowerBiReportScanner
 
 
 @flow(name="powerbi-report-scan", log_prints=True)
+@with_flow_timeout_param()
+@with_state_tracking_and_downstream_triggering(
+    node_name_param="power_bi",
+    node_type="source",
+)
 def power_bi_scan_reports(  # noqa: PLR0913
+    node_name: str | None = None,
     target_date: str | None = None,
     to_path: str | None = None,
     schema_name: str | None = None,
