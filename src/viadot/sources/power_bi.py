@@ -10,7 +10,7 @@ from pandas.core.api import DataFrame as DataFrame
 from pydantic import BaseModel
 import requests
 
-from viadot.config import get_source_credentials
+from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.base import Source
 from viadot.utils import handle_api_response
 
@@ -28,9 +28,11 @@ class PowerBICredentials(BaseModel):
 
 class PowerBiAuth:
     def __init__(
-        self, credentials: PowerBICredentials, config_key: str | None = "powerbi"
+        self,
+        credentials: PowerBICredentials | None = None,
+        credential_secret: str | None = None,
     ) -> None:
-        raw_creds = credentials or get_source_credentials(config_key)
+        raw_creds = credentials or get_credentials(credential_secret)
         if isinstance(raw_creds, PowerBICredentials):
             self.credentials = dict(raw_creds)
         else:
@@ -74,13 +76,10 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
         self,
         *args,
         credentials: PowerBICredentials | None = None,
-        config_key: str | None = "powerbi",
         columns_to_extract: list[str] | None = None,
         **kwargs: str | int | bool,
     ) -> None:
-        super().__init__(
-            *args, credentials=credentials, config_key=config_key, **kwargs
-        )
+        super().__init__(*args, credentials=credentials, **kwargs)
         self.columns_to_extract = columns_to_extract
 
     @staticmethod
@@ -190,7 +189,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         self,
         *args,
         credentials: PowerBICredentials | None = None,
-        config_key: str | None = None,
+        credential_secret: str | None = None,
         get_info_query_params: dict[str, bool] | None = None,
         logger: logging.Logger | None = None,
         **kwargs: str | int | bool,
@@ -202,7 +201,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         super().__init__(
             *args,
             credentials=credentials,
-            config_key=config_key,
+            credential_secret=credential_secret,
             **kwargs,
         )
         self.logger = logger or logging.getLogger(__name__)
