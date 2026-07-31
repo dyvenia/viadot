@@ -14,7 +14,7 @@ from viadot.sources import PowerBiReportParser, PowerBiReportScanner
 
 
 @flow(name="powerbi-report-scan", log_prints=True)
-def powerbi_report_scan_flow(
+def power_bi_scan_reports(
     config_key: str | None = None,
     target_date: str | None = None,
     to_path: str | None = None,
