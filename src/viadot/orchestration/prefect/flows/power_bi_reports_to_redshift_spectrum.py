@@ -20,7 +20,7 @@ from viadot.sources import PowerBiReportParser, PowerBiReportScanner
 @flow(name="powerbi-report-scan", log_prints=True)
 @with_flow_timeout_param()
 @with_state_tracking_and_downstream_triggering(
-    node_name_param="power_bi",
+    node_name_param="node_name",
     node_type="source",
 )
 def power_bi_scan_reports(  # noqa: PLR0913
