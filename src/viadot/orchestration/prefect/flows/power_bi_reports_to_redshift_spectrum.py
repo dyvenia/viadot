@@ -14,8 +14,7 @@ from viadot.sources import PowerBiReportParser, PowerBiReportScanner
 
 
 @flow(name="powerbi-report-scan", log_prints=True)
-def power_bi_scan_reports(
-    config_key: str | None = None,
+def power_bi_scan_reports(  # noqa: PLR0913
     target_date: str | None = None,
     to_path: str | None = None,
     schema_name: str | None = None,
@@ -28,6 +27,7 @@ def power_bi_scan_reports(
     aws_sep: str = ",",
     aws_config_key: str | None = None,
     credentials_secret: str | None = None,
+    power_bi_credential_secret: str | None = None,
 ) -> None:
     """Scan modified Power BI workspaces and load the results into Redshift Spectrum.
 
@@ -37,8 +37,6 @@ def power_bi_scan_reports(
     DataFrame into Redshift Spectrum.
 
     Args:
-        config_key: The key in the viadot config holding the Power BI credentials.
-            Defaults to None.
         target_date: The date (YYYY-MM-DD) used to filter modified workspaces and
             tag the parsed records. Defaults to yesterday (UTC) if not provided.
         to_path: The base S3 path under which each table will be written, as
@@ -65,6 +63,8 @@ def power_bi_scan_reports(
             Defaults to None.
         credentials_secret: The name of the secret holding the AWS credentials,
             used as an alternative to `aws_config_key`. Defaults to None.
+        power_bi_credential_secret: The name of the secret holding the AWS credentials,
+                        used for power bi connector. Defaults to None.
 
     Returns:
         None.
@@ -96,8 +96,10 @@ def power_bi_scan_reports(
         logger.warning(
             f"table_mapping contains unknown keys, they will be ignored: {sorted(unknown_keys)}"
         )
-
-    scanner = PowerBiReportScanner(config_key=config_key, logger=logger)  # type: ignore
+    scanner = PowerBiReportScanner(
+        credential_secret=power_bi_credential_secret,
+        logger=logger,  # type: ignore
+    )
 
     workspace_ids = get_modified_workspace_ids(scanner, target_date)
 
@@ -107,8 +109,8 @@ def power_bi_scan_reports(
 
     scan_ids = get_scan_ids(scanner, workspace_ids)
     scan_results = fetch_scan_results(scanner, scan_ids)
-    dataframes = parse_scan_results(scan_results, target_date)
-    for report_name, df in dataframes.items():
+    results_data = parse_scan_results(scan_results, target_date)
+    for report_name, df in results_data.items():
         table = table_mapping[report_name]
         table_if_exists = if_exists_mapping.get(report_name, if_exists)
         if df.empty:
