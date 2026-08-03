@@ -83,12 +83,12 @@ def power_bi_scan_reports(  # noqa: PLR0913
 
     if table_mapping is None:
         table_mapping = {
-            "reports": "powerbi_reports",
-            "reports_owners": "powerbi_report_owners",
-            "datasource_instances": "powerbi_connections",
-            "dataflows": "powerbi_dataflows",
-            "dataflow_datasource_links": "powerbi_dataflow_links",
-            "dataset_datasource_links": "powerbi_dataset_links",
+            "reports": "power_bi_reports",
+            "reports_owners": "power_bi_report_owners",
+            "datasource_instances": "power_bi_connections",
+            "dataflows": "power_bi_dataflows",
+            "dataflow_datasource_links": "power_bi_dataflow_links",
+            "dataset_datasource_links": "power_bi_dataset_links",
         }
 
     if if_exists_mapping is None:
