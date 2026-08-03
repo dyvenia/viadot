@@ -1,3 +1,5 @@
+"""Power bi report scanner to Pandas dataframes tasks."""
+
 import pandas as pd
 from prefect import task
 
