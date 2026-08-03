@@ -74,13 +74,13 @@ class PowerBiAuth:
             return self._token
 
         url = f"https://login.microsoftonline.com/{self.credentials['tenant_id']}/oauth2/v2.0/token"
-        payload = {
+        data = {
             "grant_type": "client_credentials",
             "client_id": self.credentials["client_id"],
             "client_secret": self.credentials["client_secret"],
             "scope": "https://analysis.windows.net/powerbi/api/.default",
         }
-        response = handle_api_response(url, method="POST", data=json.dumps(payload))
+        response = handle_api_response(url, method="POST", data=data)  # type: ignore
         self._token = response.json()["access_token"]
         return self._token
 
