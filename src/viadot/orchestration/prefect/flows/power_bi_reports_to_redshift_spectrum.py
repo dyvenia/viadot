@@ -24,7 +24,7 @@ from viadot.sources import PowerBiReportParser, PowerBiReportScanner
     node_type="source",
 )
 def power_bi_scan_reports(  # noqa: PLR0913
-    node_name_param: str | None = None,
+    node_name_param: str | None = None,  # noqa: ARG001
     target_date: str | None = None,
     to_path: str | None = None,
     schema_name: str | None = None,
