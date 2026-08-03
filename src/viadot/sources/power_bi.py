@@ -7,7 +7,6 @@ import logging
 import time
 from typing import Any, ClassVar, Literal
 
-from dbt import links
 import pandas as pd
 from pandas.core.api import DataFrame
 from pydantic import BaseModel
@@ -675,9 +674,10 @@ class PowerBiReportParser:
         return links
 
     def parse_dataset_datasource_links(
-            self, 
-            scan_results: list[dict],
-            workspace_owner_access_right_value: str = WORKSPACE_OWNER_ACCESS_RIGHT_VALUE) -> list[dict]:
+        self,
+        scan_results: list[dict],
+        workspace_owner_access_right_value: str = WORKSPACE_OWNER_ACCESS_RIGHT_VALUE,
+    ) -> list[dict]:
         """Parse dataset-to-datasource links out of raw scan results.
 
         Args:
@@ -691,26 +691,26 @@ class PowerBiReportParser:
         """
         links = []
         for result in scan_results:
-                for ws in result.get("workspaces", []):
-                    workspace_owners = [
-                        user.get("displayName") or user.get("emailAddress")
-                        for user in ws.get("users", [])
-                        if user.get("groupUserAccessRight")
-                        == workspace_owner_access_right_value
-                    ]
-                    for dataset in ws.get("datasets", []):
-                        for usage in dataset.get("datasourceUsages") or []:
-                            links.append(
-                                {
-                                    "Semantic_model_id": dataset.get("id"),
-                                    "Dataset_desc": dataset.get("name"),
-                                    "Workspace_id": ws.get("id"),
-                                    "Workspace_desc": ws.get("name"),
-                                    "Workspace_owners": ", ".join(workspace_owners),
-                                    "Connection_id": usage.get("datasourceInstanceId"),
-                                }
-                            )
-            return links
+            for ws in result.get("workspaces", []):
+                workspace_owners = [
+                    user.get("displayName") or user.get("emailAddress")
+                    for user in ws.get("users", [])
+                    if user.get("groupUserAccessRight")
+                    == workspace_owner_access_right_value
+                ]
+                for dataset in ws.get("datasets", []):
+                    for usage in dataset.get("datasourceUsages") or []:
+                        links.append(
+                            {
+                                "Semantic_model_id": dataset.get("id"),
+                                "Dataset_desc": dataset.get("name"),
+                                "Workspace_id": ws.get("id"),
+                                "Workspace_desc": ws.get("name"),
+                                "Workspace_owners": ", ".join(workspace_owners),
+                                "Connection_id": usage.get("datasourceInstanceId"),
+                            }
+                        )
+        return links
 
     def to_df(self, scan_results: list[dict]) -> dict[str, pd.DataFrame]:
         """Convenience method running all parsers in one go, returning DataFrames.
