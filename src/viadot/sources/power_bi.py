@@ -419,7 +419,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
             elapsed += interval
         raise TimeoutError(f"Scan {scan_id} timed out")
 
-    def fetch_report_scan(self, scan_ids: list[str]):
+    def fetch_report_scan(self, scan_ids: list[str]) -> list[dict]:
         """Wait for scans to complete and fetch their results.
 
         For each scan ID, waits until the scan finishes (via
