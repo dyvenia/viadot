@@ -1,3 +1,5 @@
+"""Power BI API sources for Viadot."""
+
 from collections.abc import Generator
 from datetime import datetime, timedelta, timezone
 import json
