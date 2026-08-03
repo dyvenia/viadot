@@ -28,7 +28,7 @@ def creds_model(creds_dict):
     return PowerBICredentials(**creds_dict)
 
 
-def _make_token_response(token="fake-token"):
+def _make_token_response(token="fake-token"):  # noqa: S107
     resp = MagicMock()
     resp.json.return_value = {"access_token": token}
     return resp
@@ -59,7 +59,7 @@ def mock_handle_api_response():
 
 
 @pytest.fixture
-def source(creds_dict, mock_handle_api_response):
+def source(creds_dict, mock_handle_api_response):  # noqa: ARG001
     src = PowerBIActivityEvents(credentials=creds_dict)
     src.logger = MagicMock()
     return src
@@ -85,9 +85,9 @@ def test_validates_credentials_from_credential_secret():
     bad_creds = {"tenant_id": "only-one-field"}
     with (
         patch(f"{MODULE}.get_credentials", return_value=bad_creds),
-        pytest.raises(Exception),  # pydantic ValidationError
+        pytest.raises(Exception, match="validation error"),  # pydantic ValidationError
     ):
-        PowerBiAuth(credential_secret="my-secret")
+        PowerBiAuth(credential_secret="my-secret")  # noqa: S106
 
 
 def test_headers_property_builds_bearer_header(creds_dict, mock_handle_api_response):
