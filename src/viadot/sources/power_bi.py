@@ -6,7 +6,7 @@ import time
 from typing import Any, ClassVar, Literal
 
 import pandas as pd
-from pandas.core.api import DataFrame as DataFrame
+from pandas.core.api import DataFrame
 from pydantic import BaseModel
 import requests
 
@@ -16,6 +16,8 @@ from viadot.utils import handle_api_response
 
 
 logging.basicConfig(level=logging.INFO)
+
+HTTP_TOO_MANY_REQUESTS = 429
 
 
 class PowerBICredentials(BaseModel):
@@ -154,7 +156,7 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
 
         while url:
             response = requests.get(url, headers=self.headers, timeout=60)
-            if response.status_code == 429:
+            if response.status_code == HTTP_TOO_MANY_REQUESTS:
                 retry_after = int(response.headers.get("Retry-After", 60))
                 self.logger.warning(f"Rate limited, sleeping {retry_after}s")
                 time.sleep(retry_after)
@@ -417,7 +419,8 @@ class PowerBiReportScanner(PowerBiAuth, Source):
                 return False
             time.sleep(interval)
             elapsed += interval
-        raise TimeoutError(f"Scan {scan_id} timed out")
+        msg = f"Scan {scan_id} timed out"
+        raise TimeoutError(msg)
 
     def fetch_report_scan(self, scan_ids: list[str]) -> list[dict]:
         """Wait for scans to complete and fetch their results.
@@ -489,7 +492,12 @@ class PowerBiReportParser:
             datetime.now(timezone.utc) - timedelta(days=1)
         ).strftime("%Y-%m-%d")
 
-    def get_nested(self, obj: dict, path: str, default=None) -> Any:
+    def get_nested(
+        self,
+        obj: dict[str, Any],
+        path: str,
+        default: Any | None = None,  # noqa: ANN401
+    ) -> Any:  # noqa: ANN401
         """Pulls data from nested dict by provided patch.
 
         Args:
