@@ -24,10 +24,6 @@ from viadot.sources.base import Source
 
 class RedshiftSpectrumCredentials(BaseModel):
     region_name: str  # The name of the AWS region.
-    aws_access_key_id: str  # The AWS access key ID.
-    aws_secret_access_key: str  # The AWS secret access key.
-    profile_name: str | None = None  # The name of the IAM profile to use.
-    endpoint_url: str | None = None  # The endpoint of the S3 service.
 
     # Below credentials are required only by some methods.
     #
@@ -41,6 +37,15 @@ class RedshiftSpectrumCredentials(BaseModel):
     # dbname: Optional[str]
     credentials_secret: str | None = None
     iam_role: str | None = None  # The IAM role to assume. Used by `create_schema()`.
+    # AWS access keys are not required if auth is configured at the machine level
+    # (eg. when using IRSA).
+    aws_access_key_id: str | None = None  # The AWS access key ID.
+    aws_secret_access_key: str | None = None  # The AWS secret access key.
+    # Profile name is required if using a profile to authenticate.
+    profile_name: str | None = None  # The name of the IAM profile to use.
+    # Used for custom S3 endpoints, e.g. when using MinIO or other S3-compatible
+    # services.
+    endpoint_url: str | None = None  # The endpoint of the S3 service.
 
     @model_validator(mode="before")
     @classmethod
@@ -57,6 +62,7 @@ class RedshiftSpectrumCredentials(BaseModel):
         if not (profile_credential or direct_credential):
             msg = "Either `profile_name` and `region_name`, or `aws_access_key_id`,"
             msg += " `aws_secret_access_key`, and `region_name` must be specified."
+            # TODO: implement machine credential check instead of raising here already
             raise CredentialError(msg)
         return credentials
 
@@ -89,10 +95,8 @@ class RedshiftSpectrum(Source):
             redshift.get_schemas()
         ```
         """
-        raw_creds = credentials or get_source_credentials(config_key)
-        validated_creds = dict(RedshiftSpectrumCredentials(**raw_creds))
-
-        super().__init__(*args, credentials=validated_creds, **kwargs)
+        creds = credentials or get_source_credentials(config_key) or {}
+        super().__init__(*args, credentials=creds, **kwargs)
 
         if not self.credentials:
             self.logger.debug(
@@ -116,13 +120,13 @@ class RedshiftSpectrum(Source):
             self._con = None
 
     @property
-    def session(self) -> boto3.session.Session:
+    def session(self) -> boto3.Session:
         """A singleton-like property for initiating an AWS session with boto3.
 
         Note that this is not an actual session, so it does not need to be closed.
         """
         if not self._session:
-            self._session = boto3.session.Session(
+            self._session = boto3.Session(
                 region_name=self.credentials.get("region_name"),
                 profile_name=self.credentials.get("profile_name"),
                 aws_access_key_id=self.credentials.get("aws_access_key_id"),
