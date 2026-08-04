@@ -269,6 +269,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         credential_secret: str | None = None,
         get_info_query_params: dict[str, bool] | None = None,
         logger: logging.Logger | None = None,
+        base_url: str | None = None,
         **kwargs: str | int | bool,
     ) -> None:
         """Initialize the PowerBiReportScanner source.
@@ -287,6 +288,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
                 logging scan progress. Defaults to a module-level logger.
             **kwargs (str | int | bool): Keyword arguments passed to the
                 parent classes.
+            base_url (str, optional): Base URL for the Power BI API. Defaults to None.
         """
         self.get_info_query_params = (
             get_info_query_params or DEFAULT_GET_INFO_QUERY_PARAMS
@@ -300,6 +302,8 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         )
         self.logger = logger or logging.getLogger(__name__)
         self.logger.info("PowerBiReportScanner initialized.")
+        if base_url is None:
+            self.base_url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces"
 
     def get_modified_workspaces(self, target_date: str | None = None) -> list[str]:
         """Retrieve IDs of workspaces modified since the given date.
@@ -316,7 +320,8 @@ class PowerBiReportScanner(PowerBiAuth, Source):
             list[str]: A list of IDs of workspaces modified since
                 `target_date`, excluding personal and inactive workspaces.
         """
-        url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces/modified"
+        endpoint = "workspaces/modified"
+        url = f"{self.base_url}/{endpoint}"
         if target_date is None:
             target_date = (datetime.now(timezone.utc) - timedelta(days=1)).strftime(
                 "%Y-%m-%d"
@@ -376,7 +381,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         """
         scan_ids: list[str] = []
         for chunk in self.chunk_list(workspace_ids):
-            url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces/getInfo"
+            url = f"{self.base_url}/getInfo"
             response = handle_api_response(
                 url,
                 headers={**self.headers, "Content-Type": "application/json"},
@@ -406,9 +411,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         Returns:
             bool: True if the scan succeeded, False if the scan failed.
         """
-        status_url = (
-            f"https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanStatus/{scan_id}"
-        )
+        status_url = f"{self.base_url}/scanStatus/{scan_id}"
         elapsed = 0
         while elapsed < timeout:
             response = handle_api_response(
@@ -443,7 +446,7 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         all_results = []
         for scan_id in scan_ids:
             self.wait_for_scan(scan_id)
-            result_url = f"https://api.powerbi.com/v1.0/myorg/admin/workspaces/scanResult/{scan_id}"
+            result_url = f"{self.base_url}/scanResult/{scan_id}"
             response = handle_api_response(
                 result_url, headers=self.headers, method="GET"
             )
