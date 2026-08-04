@@ -1,3 +1,5 @@
+"""Flow to scan modified Power BI workspaces and load results into Redshift Spectrum."""
+
 from typing import Literal
 
 from prefect import flow
