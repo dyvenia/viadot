@@ -7,16 +7,15 @@ from prefect.logging import get_run_logger
 
 from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
-    fetch_scan_results,
-    get_modified_workspace_ids,
-    get_scan_ids,
-    parse_scan_results,
+)
+from viadot.orchestration.prefect.tasks.power_bi_report_scanner_to_dfs import (
+    power_bi_workspace_info_to_dict,
 )
 from viadot.orchestration.prefect.utils import (
     with_flow_timeout_param,
     with_state_tracking_and_downstream_triggering,
 )
-from viadot.sources import PowerBiReportParser, PowerBiReportScanner
+from viadot.sources import PowerBiDefaultReportParser
 
 
 @flow(name="powerbi-report-scan", log_prints=True)
@@ -103,25 +102,14 @@ def power_bi_scan_reports(  # noqa: PLR0913
             "dataset_datasource_links": "overwrite",
         }
 
-    unknown_keys = set(table_mapping) - PowerBiReportParser.TABLE_NAMES
+    unknown_keys = set(table_mapping) - PowerBiDefaultReportParser.TABLE_NAMES
     if unknown_keys:
         logger.warning(
             f"table_mapping contains unknown keys, they will be ignored: {sorted(unknown_keys)}"
         )
-    scanner = PowerBiReportScanner(
-        credential_secret=power_bi_credential_secret,
-        logger=logger,  # type: ignore
+    results_data = power_bi_workspace_info_to_dict(
+        power_bi_credential_secret=power_bi_credential_secret, target_date=target_date
     )
-
-    workspace_ids = get_modified_workspace_ids(scanner, target_date)
-
-    if not workspace_ids:
-        logger.info("No modified workspaces found.")
-        return
-
-    scan_ids = get_scan_ids(scanner, workspace_ids)
-    scan_results = fetch_scan_results(scanner, scan_ids)
-    results_data = parse_scan_results(scan_results, target_date)
     for report_name, df in results_data.items():
         table = table_mapping[report_name]
         table_if_exists = if_exists_mapping.get(report_name, if_exists)
