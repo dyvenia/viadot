@@ -25,8 +25,8 @@ from .postgres import PostgreSQL
 from .power_bi import (
     PowerBIActivityEvents,
     PowerBiAuth,
-    PowerBiReportParser,
-    PowerBiReportScanner,
+    PowerBiDefaultReportParser,
+    PowerBiWorkspaceInfo,
 )
 from .salesforce import Salesforce
 from .sftp import Sftp
@@ -65,8 +65,8 @@ __all__ = [
     "PostgreSQL",
     "PowerBIActivityEvents",
     "PowerBiAuth",
-    "PowerBiReportParser",
-    "PowerBiReportScanner",
+    "PowerBiDefaultReportParser",
+    "PowerBiWorkspaceInfo",
     "SMBClient",
     "SQLServer",
     "SQLite",
