@@ -90,7 +90,6 @@ def power_bi_activity_events_to_redshift_spectrum(  # noqa: PLR0913
         columns_to_extract=columns_to_extract,
         credentials_secret=power_bi_credential_secret,
     )
-    logger.info(f"Fetched {len(df)} rows from Power BI API.")
     df = log_df_schema(df)
 
     logger.info("Loading data into Redshift Spectrum.")
