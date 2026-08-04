@@ -655,7 +655,7 @@ class PowerBiWorkspaceInfo(PowerBiAuth, Source):
             list[str]: A list of IDs of workspaces modified since
                 `target_date`, excluding personal and inactive workspaces.
         """
-        endpoint = "workspaces/modified"
+        endpoint = "modified"
         url = f"{self.base_url}/{endpoint}"
         if target_date is None:
             target_date = (datetime.now(timezone.utc) - timedelta(days=1)).strftime(
