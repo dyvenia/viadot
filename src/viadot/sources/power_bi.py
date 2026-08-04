@@ -1,5 +1,6 @@
 """Power BI API sources for Viadot."""
 
+from abc import ABC, abstractmethod
 from collections.abc import Generator
 from datetime import datetime, timedelta, timezone
 import json
@@ -199,7 +200,7 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
         records = self.query(date)
         if not records:
             self._handle_if_empty(
-                if_empty=if_empty, message=f"No activityu events found for {date}."
+                if_empty=if_empty, message=f"No activity events found for {date}."
             )
             return pd.DataFrame()
 
@@ -242,7 +243,331 @@ DEFAULT_GET_INFO_QUERY_PARAMS: dict[str, bool] = {
 }
 
 
-class PowerBiReportScanner(PowerBiAuth, Source):
+class PowerBiReportParser(ABC):
+    """Abstract interface for parsing raw Power BI scan results."""
+
+    @abstractmethod
+    def parse_scan_results(
+        self, scan_results: list[dict]
+    ) -> tuple[list[dict], list[dict]]:
+        """Parse reports and report owners out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            tuple[list[dict], list[dict]]: A tuple of `(reports,
+                reports_owners)`.
+        """
+        ...
+
+    @abstractmethod
+    def parse_datasource_instances(self, scan_results: list[dict]) -> list[dict]:
+        """Parse datasource instances out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of datasource instance records.
+        """
+        ...
+
+    @abstractmethod
+    def parse_dataflows(self, scan_results: list[dict]) -> list[dict]:
+        """Parse dataflows out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of dataflow records.
+        """
+        ...
+
+    @abstractmethod
+    def parse_dataflow_datasource_links(self, scan_results: list[dict]) -> list[dict]:
+        """Parse dataflow-to-datasource links out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of link records mapping dataflows to
+                datasource instances.
+        """
+        ...
+
+    @abstractmethod
+    def parse_dataset_datasource_links(self, scan_results: list[dict]) -> list[dict]:
+        """Parse dataset-to-datasource links out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of link records mapping datasets to
+                datasource instances.
+        """
+        ...
+
+
+class PowerBiDefaultReportParser(PowerBiReportParser):
+    """Parses raw Power BI scan results into dataframe."""
+
+    TABLE_NAMES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "reports",
+            "reports_owners",
+            "datasource_instances",
+            "dataflows",
+            "dataflow_datasource_links",
+            "dataset_datasource_links",
+        }
+    )
+
+    def __init__(
+        self,
+        report_mapping: dict | None = None,
+        workspace_mapping: dict | None = None,
+        owner_mapping: dict | None = None,
+        target_date: str | None = None,
+    ) -> None:
+        """Initialize the PowerBiReportParser.
+
+        Args:
+            report_mapping (dict, optional): Mapping of target column names
+                to nested paths within a report object. Defaults to
+                `REPORT_FIELD_MAPPING`.
+            workspace_mapping (dict, optional): Mapping of target column
+                names to nested paths within a workspace object. Defaults
+                to `WORKSPACE_FIELD_MAPPING`.
+            owner_mapping (dict, optional): Mapping of target column names
+                to nested paths within a report user object. Defaults to
+                `OWNER_FIELD_MAPPING`.
+            target_date (str, optional): The date, in `YYYY-MM-DD` format,
+                to stamp parsed records with. Defaults to yesterday's date
+                (UTC).
+        """
+        self.report_mapping = report_mapping or REPORT_FIELD_MAPPING
+        self.workspace_mapping = workspace_mapping or WORKSPACE_FIELD_MAPPING
+        self.owner_mapping = owner_mapping or OWNER_FIELD_MAPPING
+        self.target_date = target_date or (
+            datetime.now(timezone.utc) - timedelta(days=1)
+        ).strftime("%Y-%m-%d")
+
+    def get_nested(
+        self,
+        obj: dict[str, Any],
+        path: str,
+        default: Any | None = None,  # noqa: ANN401
+    ) -> Any:  # noqa: ANN401
+        """Pulls data from nested dict by provided patch.
+
+        Args:
+            obj (dict): The dictionary to traverse.
+            path (str): A dot-separated path of keys, e.g. `"a.b.c"`.
+            default (Any, optional): The value to return if the path
+                cannot be resolved. Defaults to None.
+
+        Returns:
+            Any: The value found at `path`, or `default` if any key in
+                the path is missing or an intermediate value is not a
+                dict.
+        """
+        current = obj
+        for key in path.split("."):
+            if isinstance(current, dict):
+                current = current.get(key)
+            else:
+                return default
+        return current if current is not None else default
+
+    def parse_scan_results(
+        self,
+        scan_results: list[dict],
+        owner_access_right_value: str = OWNER_ACCESS_RIGHT_VALUE,
+    ) -> tuple[list[dict], list[dict]]:
+        """Parse reports and report owners out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+            owner_access_right_value (str, optional): The value of
+                `reportUserAccessRight` that identifies a user as the
+                report's owner. Defaults to `OWNER_ACCESS_RIGHT_VALUE`.
+
+        Returns:
+            tuple[list[dict], list[dict]]: A tuple of `(reports,
+                reports_owners)`, where `reports` is a list of flattened
+                report records and `reports_owners` is a list of report
+                owner records.
+        """
+        reports: list[dict] = []
+        reports_owners: list[dict] = []
+
+        for result in scan_results:
+            for ws in result.get("workspaces", []):
+                ws_row = {
+                    target: self.get_nested(ws, path)
+                    for target, path in self.workspace_mapping.items()
+                }
+
+                for rep in ws.get("reports", []):
+                    rep_row = {
+                        target: self.get_nested(rep, path)
+                        for target, path in self.report_mapping.items()
+                    }
+                    rep_row.update(ws_row)
+                    rep_row["Target_date"] = self.target_date
+                    reports.append(rep_row)
+                    report_id = rep.get("id")
+                    for user in rep.get("users", []):
+                        if (
+                            user.get("reportUserAccessRight")
+                            == owner_access_right_value
+                        ):
+                            owner_row = {
+                                target: self.get_nested(user, path)
+                                for target, path in self.owner_mapping.items()
+                            }
+                            owner_row["Report_id"] = report_id
+                            owner_row["Target_date"] = self.target_date
+                            reports_owners.append(owner_row)
+
+        return reports, reports_owners
+
+    def parse_datasource_instances(self, scan_results: list[dict]) -> list[dict]:
+        """Parse datasource instances out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of datasource instance records, each with
+                `Connection_id`, `Connection_desc`, and `Connection_type`.
+        """
+        datasource_instances = []
+        for result in scan_results:
+            for ds_instance in result.get("datasourceInstances", []):
+                instance_id = ds_instance.get("datasourceId")
+                ds_type = ds_instance.get("datasourceType")
+                conn_details = ds_instance.get("connectionDetails", {})
+
+                details_str = " | ".join(f"{k}={v}" for k, v in conn_details.items())
+                connection_desc = f"{details_str}" if details_str else ds_type
+
+                datasource_instances.append(
+                    {
+                        "Connection_id": instance_id,
+                        "Connection_desc": connection_desc,
+                        "Connection_type": ds_type,
+                    }
+                )
+        return datasource_instances
+
+    def parse_dataflows(self, scan_results: list[dict]) -> list[dict]:
+        """Parse dataflows out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of dataflow records, each with
+                `Dataflow_id`, `Dataflow_desc`, `Workspace_id`,
+                `Configured_by`, `Modified_by`, `Modified_date`, and
+                `Target_date`.
+        """
+        dataflows = []
+        for result in scan_results:
+            for ws in result.get("workspaces", []):
+                for df in ws.get("dataflows", []):
+                    dataflows.append(
+                        {
+                            "Dataflow_id": df.get("objectId"),
+                            "Dataflow_desc": df.get("name"),
+                            "Workspace_id": ws.get("id"),
+                            "Configured_by": df.get("configuredBy"),
+                            "Modified_by": df.get("modifiedBy"),
+                            "Modified_date": df.get("modifiedDateTime"),
+                            "Target_date": self.target_date,
+                        }
+                    )
+        return dataflows
+
+    def parse_dataflow_datasource_links(self, scan_results: list[dict]) -> list[dict]:
+        """Parse dataflow-to-datasource links out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of link records, each with `Dataflow_id`
+                and `Connection_id`, mapping dataflows to the datasource
+                instances they use.
+        """
+        links = []
+        for result in scan_results:
+            for ws in result.get("workspaces", []):
+                for df in ws.get("dataflows", []):
+                    for usage in df.get("datasourceUsages") or []:
+                        links.append(
+                            {
+                                "Dataflow_id": df.get("objectId"),
+                                "Connection_id": usage.get("datasourceInstanceId"),
+                            }
+                        )
+        return links
+
+    def parse_dataset_datasource_links(
+        self,
+        scan_results: list[dict],
+        workspace_owner_access_right_value: str = WORKSPACE_OWNER_ACCESS_RIGHT_VALUE,
+    ) -> list[dict]:
+        """Parse dataset-to-datasource links out of raw scan results.
+
+        Args:
+            scan_results (list[dict]): The raw scan result payloads to
+                parse.
+
+        Returns:
+            list[dict]: A list of link records, each with
+                `Semantic_model_id` and `Connection_id`, mapping datasets
+                to the datasource instances they use.
+        """
+        links = []
+        for result in scan_results:
+            for ws in result.get("workspaces", []):
+                workspace_owners = [
+                    user.get("displayName") or user.get("emailAddress")
+                    for user in ws.get("users", [])
+                    if user.get("groupUserAccessRight")
+                    == workspace_owner_access_right_value
+                ]
+                for dataset in ws.get("datasets", []):
+                    for usage in dataset.get("datasourceUsages") or []:
+                        links.append(
+                            {
+                                "Semantic_model_id": dataset.get("id"),
+                                "Dataset_desc": dataset.get("name"),
+                                "Workspace_id": ws.get("id"),
+                                "Workspace_desc": ws.get("name"),
+                                "Workspace_owners": ", ".join(workspace_owners),
+                                "Connection_id": usage.get("datasourceInstanceId"),
+                            }
+                        )
+        return links
+
+
+class PowerBiWorkspaceInfo(PowerBiAuth, Source):
     """Power BI Admin - Report Scanner source.
 
     Scans Power BI workspaces using the Admin Metadata Scanning API:
@@ -270,9 +595,11 @@ class PowerBiReportScanner(PowerBiAuth, Source):
         get_info_query_params: dict[str, bool] | None = None,
         logger: logging.Logger | None = None,
         base_url: str | None = None,
+        parser: PowerBiReportParser | None = None,
+        target_date: str | None = None,
         **kwargs: str | int | bool,
     ) -> None:
-        """Initialize the PowerBiReportScanner source.
+        """Initialize the PowerBiWorkspaceInfo source.
 
         Args:
             *args: Positional arguments passed to the parent classes.
@@ -289,7 +616,13 @@ class PowerBiReportScanner(PowerBiAuth, Source):
             **kwargs (str | int | bool): Keyword arguments passed to the
                 parent classes.
             base_url (str, optional): Base URL for the Power BI API. Defaults to None.
+            parser (PowerBiReportParser, optional): Parser instance to use for
+                processing scan results. Defaults to None.
+            target_date (str, optional): The date, in `YYYY-MM-DD` format,
+                since which to look for modified workspaces. Defaults to None,
+                in which case yesterday's date (UTC) is used.
         """
+        self.target_date = target_date
         self.get_info_query_params = (
             get_info_query_params or DEFAULT_GET_INFO_QUERY_PARAMS
         )
@@ -301,9 +634,11 @@ class PowerBiReportScanner(PowerBiAuth, Source):
             **kwargs,
         )
         self.logger = logger or logging.getLogger(__name__)
-        self.logger.info("PowerBiReportScanner initialized.")
-        if base_url is None:
-            self.base_url = "https://api.powerbi.com/v1.0/myorg/admin/workspaces"
+        self.logger.info("PowerBiWorkspaceInfo initialized.")
+        self.base_url = (
+            base_url or "https://api.powerbi.com/v1.0/myorg/admin/workspaces"
+        )
+        self.parser: PowerBiReportParser = parser or PowerBiDefaultReportParser()
 
     def get_modified_workspaces(self, target_date: str | None = None) -> list[str]:
         """Retrieve IDs of workspaces modified since the given date.
@@ -453,274 +788,8 @@ class PowerBiReportScanner(PowerBiAuth, Source):
             all_results.append(response.json())
         return all_results
 
-
-class PowerBiReportParser:
-    """Parses raw Power BI scan results into dataframe."""
-
-    TABLE_NAMES: ClassVar[frozenset[str]] = frozenset(
-        {
-            "reports",
-            "reports_owners",
-            "datasource_instances",
-            "dataflows",
-            "dataflow_datasource_links",
-            "dataset_datasource_links",
-        }
-    )
-
-    def __init__(
-        self,
-        report_mapping: dict | None = None,
-        workspace_mapping: dict | None = None,
-        owner_mapping: dict | None = None,
-        target_date: str | None = None,
-    ) -> None:
-        """Initialize the PowerBiReportParser.
-
-        Args:
-            report_mapping (dict, optional): Mapping of target column names
-                to nested paths within a report object. Defaults to
-                `REPORT_FIELD_MAPPING`.
-            workspace_mapping (dict, optional): Mapping of target column
-                names to nested paths within a workspace object. Defaults
-                to `WORKSPACE_FIELD_MAPPING`.
-            owner_mapping (dict, optional): Mapping of target column names
-                to nested paths within a report user object. Defaults to
-                `OWNER_FIELD_MAPPING`.
-            target_date (str, optional): The date, in `YYYY-MM-DD` format,
-                to stamp parsed records with. Defaults to yesterday's date
-                (UTC).
-        """
-        self.report_mapping = report_mapping or REPORT_FIELD_MAPPING
-        self.workspace_mapping = workspace_mapping or WORKSPACE_FIELD_MAPPING
-        self.owner_mapping = owner_mapping or OWNER_FIELD_MAPPING
-        self.target_date = target_date or (
-            datetime.now(timezone.utc) - timedelta(days=1)
-        ).strftime("%Y-%m-%d")
-
-    def get_nested(
-        self,
-        obj: dict[str, Any],
-        path: str,
-        default: Any | None = None,  # noqa: ANN401
-    ) -> Any:  # noqa: ANN401
-        """Pulls data from nested dict by provided patch.
-
-        Args:
-            obj (dict): The dictionary to traverse.
-            path (str): A dot-separated path of keys, e.g. `"a.b.c"`.
-            default (Any, optional): The value to return if the path
-                cannot be resolved. Defaults to None.
-
-        Returns:
-            Any: The value found at `path`, or `default` if any key in
-                the path is missing or an intermediate value is not a
-                dict.
-        """
-        current = obj
-        for key in path.split("."):
-            if isinstance(current, dict):
-                current = current.get(key)
-            else:
-                return default
-        return current if current is not None else default
-
-    def parse_scan_results(
-        self,
-        scan_results: list[dict],
-        report_mapping: dict = REPORT_FIELD_MAPPING,
-        workspace_mapping: dict = WORKSPACE_FIELD_MAPPING,
-        owner_mapping: dict = OWNER_FIELD_MAPPING,
-        owner_access_right_value: str = OWNER_ACCESS_RIGHT_VALUE,
-    ) -> tuple[list[dict], list[dict]]:
-        """Parse reports and report owners out of raw scan results.
-
-        Args:
-            scan_results (list[dict]): The raw scan result payloads to
-                parse.
-            report_mapping (dict, optional): Mapping of target column
-                names to nested paths within a report object. Defaults to
-                `REPORT_FIELD_MAPPING`.
-            workspace_mapping (dict, optional): Mapping of target column
-                names to nested paths within a workspace object. Defaults
-                to `WORKSPACE_FIELD_MAPPING`.
-            owner_mapping (dict, optional): Mapping of target column names
-                to nested paths within a report user object. Defaults to
-                `OWNER_FIELD_MAPPING`.
-            owner_access_right_value (str, optional): The value of
-                `reportUserAccessRight` that identifies a user as the
-                report's owner. Defaults to `OWNER_ACCESS_RIGHT_VALUE`.
-
-        Returns:
-            tuple[list[dict], list[dict]]: A tuple of `(reports,
-                reports_owners)`, where `reports` is a list of flattened
-                report records and `reports_owners` is a list of report
-                owner records.
-        """
-        reports: list[dict] = []
-        reports_owners: list[dict] = []
-
-        for result in scan_results:
-            for ws in result.get("workspaces", []):
-                ws_row = {
-                    target: self.get_nested(ws, path)
-                    for target, path in workspace_mapping.items()
-                }
-
-                for rep in ws.get("reports", []):
-                    rep_row = {
-                        target: self.get_nested(rep, path)
-                        for target, path in report_mapping.items()
-                    }
-                    rep_row.update(ws_row)
-                    rep_row["Target_date"] = self.target_date
-                    reports.append(rep_row)
-                    report_id = rep.get("id")
-                    for user in rep.get("users", []):
-                        if (
-                            user.get("reportUserAccessRight")
-                            == owner_access_right_value
-                        ):
-                            owner_row = {
-                                target: self.get_nested(user, path)
-                                for target, path in owner_mapping.items()
-                            }
-                            owner_row["Report_id"] = report_id
-                            owner_row["Target_date"] = self.target_date
-                            reports_owners.append(owner_row)
-
-        return reports, reports_owners
-
-    def parse_datasource_instances(self, scan_results: list[dict]) -> list:
-        """Parse datasource instances out of raw scan results.
-
-        Args:
-            scan_results (list[dict]): The raw scan result payloads to
-                parse.
-
-        Returns:
-            list[dict]: A list of datasource instance records, each with
-                `Connection_id`, `Connection_desc`, and `Connection_type`.
-        """
-        datasource_instances = []
-        for result in scan_results:
-            for ds_instance in result.get("datasourceInstances", []):
-                instance_id = ds_instance.get("datasourceId")
-                ds_type = ds_instance.get("datasourceType")
-                conn_details = ds_instance.get("connectionDetails", {})
-
-                details_str = " | ".join(f"{k}={v}" for k, v in conn_details.items())
-                connection_desc = f"{details_str}" if details_str else ds_type
-
-                datasource_instances.append(
-                    {
-                        "Connection_id": instance_id,
-                        "Connection_desc": connection_desc,
-                        "Connection_type": ds_type,
-                    }
-                )
-        return datasource_instances
-
-    def parse_dataflows(self, scan_results: list[dict]) -> list:
-        """Parse dataflows out of raw scan results.
-
-        Args:
-            scan_results (list[dict]): The raw scan result payloads to
-                parse.
-
-        Returns:
-            list[dict]: A list of dataflow records, each with
-                `Dataflow_id`, `Dataflow_desc`, `Workspace_id`,
-                `Configured_by`, `Modified_by`, `Modified_date`, and
-                `Target_date`.
-        """
-        dataflows = []
-        for result in scan_results:
-            for ws in result.get("workspaces", []):
-                for df in ws.get("dataflows", []):
-                    dataflows.append(
-                        {
-                            "Dataflow_id": df.get("objectId"),
-                            "Dataflow_desc": df.get("name"),
-                            "Workspace_id": ws.get("id"),
-                            "Configured_by": df.get("configuredBy"),
-                            "Modified_by": df.get("modifiedBy"),
-                            "Modified_date": df.get("modifiedDateTime"),
-                            "Target_date": self.target_date,
-                        }
-                    )
-        return dataflows
-
-    def parse_dataflow_datasource_links(self, scan_results: list[dict]) -> list[dict]:
-        """Parse dataflow-to-datasource links out of raw scan results.
-
-        Args:
-            scan_results (list[dict]): The raw scan result payloads to
-                parse.
-
-        Returns:
-            list[dict]: A list of link records, each with `Dataflow_id`
-                and `Connection_id`, mapping dataflows to the datasource
-                instances they use.
-        """
-        links = []
-        for result in scan_results:
-            for ws in result.get("workspaces", []):
-                for df in ws.get("dataflows", []):
-                    for usage in df.get("datasourceUsages") or []:
-                        links.append(
-                            {
-                                "Dataflow_id": df.get("objectId"),
-                                "Connection_id": usage.get("datasourceInstanceId"),
-                            }
-                        )
-        return links
-
-    def parse_dataset_datasource_links(
-        self,
-        scan_results: list[dict],
-        workspace_owner_access_right_value: str = WORKSPACE_OWNER_ACCESS_RIGHT_VALUE,
-    ) -> list[dict]:
-        """Parse dataset-to-datasource links out of raw scan results.
-
-        Args:
-            scan_results (list[dict]): The raw scan result payloads to
-                parse.
-
-        Returns:
-            list[dict]: A list of link records, each with
-                `Semantic_model_id` and `Connection_id`, mapping datasets
-                to the datasource instances they use.
-        """
-        links = []
-        for result in scan_results:
-            for ws in result.get("workspaces", []):
-                workspace_owners = [
-                    user.get("displayName") or user.get("emailAddress")
-                    for user in ws.get("users", [])
-                    if user.get("groupUserAccessRight")
-                    == workspace_owner_access_right_value
-                ]
-                for dataset in ws.get("datasets", []):
-                    for usage in dataset.get("datasourceUsages") or []:
-                        links.append(
-                            {
-                                "Semantic_model_id": dataset.get("id"),
-                                "Dataset_desc": dataset.get("name"),
-                                "Workspace_id": ws.get("id"),
-                                "Workspace_desc": ws.get("name"),
-                                "Workspace_owners": ", ".join(workspace_owners),
-                                "Connection_id": usage.get("datasourceInstanceId"),
-                            }
-                        )
-        return links
-
-    def to_df(self, scan_results: list[dict]) -> dict[str, pd.DataFrame]:
+    def to_dict(self) -> dict[str, pd.DataFrame]:
         """Convenience method running all parsers in one go, returning DataFrames.
-
-        Args:
-            scan_results (list[dict]): The raw scan result payloads to
-                parse.
 
         Returns:
             dict[str, pd.DataFrame]: A dictionary mapping each table name
@@ -730,18 +799,21 @@ class PowerBiReportParser:
                 `dataset_datasource_links`).
 
         """
-        reports, reports_owners = self.parse_scan_results(scan_results)
+        workspace_ids = self.get_modified_workspaces(self.target_date)
+        scan_ids = self.get_workspaces_info(workspace_ids)
+        scan_results = self.fetch_report_scan(scan_ids)
+        reports, reports_owners = self.parser.parse_scan_results(scan_results)
         return {
             "reports": pd.DataFrame(reports),
             "reports_owners": pd.DataFrame(reports_owners),
             "datasource_instances": pd.DataFrame(
-                self.parse_datasource_instances(scan_results)
+                self.parser.parse_datasource_instances(scan_results)
             ),
-            "dataflows": pd.DataFrame(self.parse_dataflows(scan_results)),
+            "dataflows": pd.DataFrame(self.parser.parse_dataflows(scan_results)),
             "dataflow_datasource_links": pd.DataFrame(
-                self.parse_dataflow_datasource_links(scan_results)
+                self.parser.parse_dataflow_datasource_links(scan_results)
             ),
             "dataset_datasource_links": pd.DataFrame(
-                self.parse_dataset_datasource_links(scan_results)
+                self.parser.parse_dataset_datasource_links(scan_results)
             ),
         }
