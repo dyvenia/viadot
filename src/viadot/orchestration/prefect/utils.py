@@ -959,9 +959,14 @@ def _get_aws_credentials(
             credentials = secret
     elif block_type == "AwsCredentials":
         aws_credentials_block = _load_prefect_block(AwsCredentials, secret_name)
+        aws_secret_access_key = aws_credentials_block.aws_secret_access_key
         credentials = {
             "aws_access_key_id": aws_credentials_block.aws_access_key_id,
-            "aws_secret_access_key": aws_credentials_block.aws_secret_access_key.get_secret_value(),
+            "aws_secret_access_key": (
+                aws_secret_access_key.get_secret_value()
+                if aws_secret_access_key
+                else None
+            ),
             "region_name": aws_credentials_block.region_name,
         }
 
