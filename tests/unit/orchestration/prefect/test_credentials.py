@@ -51,7 +51,7 @@ def test_get_aws_credentials_returns_complete_static_key_pair(monkeypatch):
 
     assert credentials == {
         "aws_access_key_id": "access-key",
-        "aws_secret_access_key": "secret",
+        "aws_secret_access_key": "secret",  # pragma: allowlist secret
         "region_name": "eu-west-1",
     }
 
