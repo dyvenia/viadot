@@ -959,26 +959,11 @@ def _get_aws_credentials(
             credentials = secret
     elif block_type == "AwsCredentials":
         aws_credentials_block = _load_prefect_block(AwsCredentials, secret_name)
-        aws_access_key_id = aws_credentials_block.aws_access_key_id
-        aws_secret_access_key_block = aws_credentials_block.aws_secret_access_key
-        aws_secret_access_key = (
-            aws_secret_access_key_block.get_secret_value()
-            if aws_secret_access_key_block
-            else None
-        )
-
-        if bool(aws_access_key_id) != bool(aws_secret_access_key):
-            msg = "AWS access key ID and secret access key must be provided together."
-            raise ValueError(msg)
-
-        credentials = {"region_name": aws_credentials_block.region_name}
-        if aws_access_key_id and aws_secret_access_key:
-            credentials.update(
-                {
-                    "aws_access_key_id": aws_access_key_id,
-                    "aws_secret_access_key": aws_secret_access_key,
-                }
-            )
+        credentials = {
+            "aws_access_key_id": aws_credentials_block.aws_access_key_id,
+            "aws_secret_access_key": aws_credentials_block.aws_secret_access_key.get_secret_value(),
+            "region_name": aws_credentials_block.region_name,
+        }
 
     return credentials
 
