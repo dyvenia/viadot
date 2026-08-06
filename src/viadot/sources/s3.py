@@ -29,7 +29,7 @@ from viadot.sources.base import Source
 
 
 class S3Credentials(BaseModel):
-    region_name: str  # The name of the AWS region.
+    region_name: str | None = None  # The name of the AWS region.
     # AWS access keys are not required if auth is configured at the machine level
     # (eg. when using IRSA).
     aws_access_key_id: str | None = None  # The AWS access key ID.
@@ -45,6 +45,7 @@ class S3Credentials(BaseModel):
         """Validate credentials.
 
         Ensure that at least one of the following is provided:
+        - no explicit credentials (use the AWS SDK's default credential chain)
         - profile_name and region_name
         - aws_access_key_id, aws_secret_access_key, and region_name
         - region_name only (for cases where credentials are configured at the machine
@@ -57,11 +58,24 @@ class S3Credentials(BaseModel):
 
         profile_credential = profile_name and region_name
         direct_credential = aws_access_key_id and aws_secret_access_key and region_name
+        # Machine credentials are resolved by the AWS SDK, for example from IRSA or
+        # environment variables. The region can also be configured explicitly.
+        machine_credential = not any(
+            (profile_name, region_name, aws_access_key_id, aws_secret_access_key)
+        )
+        partial_machine_credential = region_name and not any(
+            (profile_name, aws_access_key_id, aws_secret_access_key)
+        )
 
-        if not (profile_credential or direct_credential):
-            msg = "Either `profile_name` and `region_name`, or `aws_access_key_id`, "
-            msg += "`aws_secret_access_key`, and `region_name`, or `region_name` only must be specified."
-            # TODO: implement machine credential check instead of raising here already
+        if not (
+            profile_credential
+            or direct_credential
+            or machine_credential
+            or partial_machine_credential
+        ):
+            msg = "AWS credentials must be omitted, or specify `region_name` only, "
+            msg += "`profile_name` and `region_name`, or `aws_access_key_id`, "
+            msg += "`aws_secret_access_key`, and `region_name`."
             raise CredentialError(msg)
         return credentials
 

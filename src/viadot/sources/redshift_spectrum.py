@@ -23,7 +23,7 @@ from viadot.sources.base import Source
 
 
 class RedshiftSpectrumCredentials(BaseModel):
-    region_name: str  # The name of the AWS region.
+    region_name: str | None = None  # The name of the AWS region.
 
     # Below credentials are required only by some methods.
     #
@@ -50,7 +50,11 @@ class RedshiftSpectrumCredentials(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def is_configured(cls, credentials: dict[str, Any]) -> dict[str, Any]:
-        """Validate the credentials configuration."""
+        """Validate the credentials configuration.
+
+        Allow credentials from a profile, static keys, or the AWS SDK's default
+        credential chain, optionally with an explicitly configured region.
+        """
         profile_name = credentials.get("profile_name")
         region_name = credentials.get("region_name")
         aws_access_key_id = credentials.get("aws_access_key_id")
@@ -58,11 +62,24 @@ class RedshiftSpectrumCredentials(BaseModel):
 
         profile_credential = profile_name and region_name
         direct_credential = aws_access_key_id and aws_secret_access_key and region_name
+        # Machine credentials are resolved by the AWS SDK, for example from IRSA or
+        # environment variables. The region can also be configured explicitly.
+        machine_credential = not any(
+            (profile_name, region_name, aws_access_key_id, aws_secret_access_key)
+        )
+        partial_machine_credential = region_name and not any(
+            (profile_name, aws_access_key_id, aws_secret_access_key)
+        )
 
-        if not (profile_credential or direct_credential):
-            msg = "Either `profile_name` and `region_name`, or `aws_access_key_id`,"
-            msg += " `aws_secret_access_key`, and `region_name` must be specified."
-            # TODO: implement machine credential check instead of raising here already
+        if not (
+            profile_credential
+            or direct_credential
+            or machine_credential
+            or partial_machine_credential
+        ):
+            msg = "AWS credentials must be omitted, or specify `region_name` only, "
+            msg += "`profile_name` and `region_name`, or `aws_access_key_id`, "
+            msg += "`aws_secret_access_key`, and `region_name`."
             raise CredentialError(msg)
         return credentials
 
