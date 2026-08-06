@@ -614,14 +614,14 @@ class PowerBiWorkspaceInfo(PowerBiAuth, Source):
                 Defaults to `DEFAULT_GET_INFO_QUERY_PARAMS`.
             logger (logging.Logger, optional): Logger instance to use for
                 logging scan progress. Defaults to a module-level logger.
-            **kwargs (str | int | bool): Keyword arguments passed to the
-                parent classes.
             base_url (str, optional): Base URL for the Power BI API. Defaults to None.
             parser (PowerBiReportParser, optional): Parser instance to use for
                 processing scan results. Defaults to None.
             target_date (str, optional): The date, in `YYYY-MM-DD` format,
                 since which to look for modified workspaces. Defaults to None,
                 in which case yesterday's date (UTC) is used.
+            **kwargs (str | int | bool): Keyword arguments passed to the
+                parent classes.
         """
         self.target_date = target_date
         self.get_info_query_params = (
@@ -672,9 +672,9 @@ class PowerBiWorkspaceInfo(PowerBiAuth, Source):
                 raise ValueError(msg) from e
 
         self.logger.info(f"Target_date : {target_date} (YYYY-MM-DD)")
-        date_str = f"{target_date}T00:00:00.0000000Z"
+        datetime_str = f"{target_date}T00:00:00.0000000Z"
         params = {
-            "modifiedSince": date_str,
+            "modifiedSince": datetime_str,
             "excludePersonalWorkspaces": True,
             "excludeInActiveWorkspaces": True,
         }
