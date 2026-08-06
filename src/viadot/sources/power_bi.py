@@ -184,12 +184,13 @@ class PowerBIActivityEvents(PowerBiAuth, Source):
         self,
         date: str | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
-    ) -> DataFrame | None:
+    ) -> DataFrame:
         """Download activity events for a day into a pandas DataFrame.
 
         Args:
-            date: 'YYYY-MM-DD' UTC day to extract. Defaults to yesterday (UTC).
-            if_empty: behavior when no events are returned.
+            date (str): 'YYYY-MM-DD' UTC day to extract. Defaults to yesterday (UTC).
+            if_empty (Literal["warn", "skip", "fail"]): behavior when no events
+                are returned.
 
         Returns:
             pd.DataFrame: Dataframe with processed events.
