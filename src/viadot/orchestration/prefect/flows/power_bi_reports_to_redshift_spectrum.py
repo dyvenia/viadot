@@ -25,13 +25,13 @@ from viadot.sources import PowerBiDefaultReportParser
     node_type="source",
 )
 def power_bi_scan_reports(  # noqa: PLR0913
+    schema_name: str,
     node_name_param: str | None = None,  # noqa: ARG001
     target_date: str | None = None,
     to_path: str | None = None,
-    schema_name: str | None = None,
     table_mapping: dict[str, str] | None = None,
     extension: str = ".parquet",
-    if_exists: Literal["overwrite", "append", "skip"] = "append",
+    if_exists: Literal["overwrite", "append"] = "append",
     if_exists_mapping: dict[str, Literal["overwrite", "append", "skip"]] | None = None,
     partition_cols: list[str] | None = None,
     compression: str | None = None,
@@ -48,12 +48,11 @@ def power_bi_scan_reports(  # noqa: PLR0913
     DataFrame into Redshift Spectrum.
 
     Args:
+        schema_name: The Redshift Spectrum schema to load the tables into.
         target_date: The date (YYYY-MM-DD) used to filter modified workspaces and
             tag the parsed records. Defaults to yesterday (UTC) if not provided.
         to_path: The base S3 path under which each table will be written, as
             `{to_path}/{table}`. Defaults to None.
-        schema_name: The Redshift Spectrum schema to load the tables into.
-            Defaults to None.
         table_mapping: A mapping from internal report names (e.g. "reports",
             "dataflows") to custom target table names. Unrecognized keys are
             ignored with a warning; missing keys fall back to the default table
