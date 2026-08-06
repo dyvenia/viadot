@@ -41,12 +41,12 @@ def log_df_schema(df: pd.DataFrame, name: str = "log_df_schema") -> pd.DataFrame
 @with_flow_timeout_param()
 @with_state_tracking_and_downstream_triggering(node_name_param="table")
 def power_bi_activity_events_to_redshift_spectrum(  # noqa: PLR0913
+    to_path: str,
+    schema_name: str,
+    table: str,
     date: str | None = None,
-    to_path: str | None = None,
-    schema_name: str | None = None,
-    table: str | None = None,
     extension: str = ".parquet",
-    if_exists: Literal["overwrite", "append", "skip"] = "overwrite",
+    if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
     compression: str | None = None,
     aws_sep: str = ",",
@@ -58,12 +58,12 @@ def power_bi_activity_events_to_redshift_spectrum(  # noqa: PLR0913
     """Fetch Power BI activity events and load them into Redshift Spectrum.
 
     Args:
+        to_path (str): S3 destination path, e.g. 's3://my-bucket/powerbi/issues/'.
+                    Defaults to None.
+        schema_name (str): Redshift Spectrum schema name.
+                    Defaults to None.
+        table (str): Target table name. Defaults to None.
         date (str, Optional): date string 'YYYY-MM-DD' (UTC day to extract).
-        to_path (str | None, optional): S3 destination path, e.g. 's3://my-bucket/powerbi/issues/'.
-                Defaults to None.
-        schema_name (str | None, optional): Redshift Spectrum schema name.
-                Defaults to None.
-        table (str | None, optional): Target table name. Defaults to None.
         extension (str): File extension for the output files. Defaults to '.parquet'.
         if_exists (Literal["overwrite", "append", "skip"], optional): Behaviour
                 when the table already exists. Defaults to 'overwrite'.
