@@ -1684,10 +1684,11 @@ class SMBClient(Source):
                 share root.
             s3_path (str): Base S3 path (e.g. ``s3://bucket/folder/``).
                 Filenames will be appended automatically, optionally with prefix.
-            aws_credentials (dict[str, Any]): Required AWS credential mapping
-                used by the AWS CLI. Must include `aws_access_key_id` and
-                `aws_secret_access_key`. Can also include `aws_session_token`,
-                `region_name`, and `endpoint_url`.
+            aws_credentials (dict[str, Any] | None): Optional AWS credential
+                mapping. Can include `aws_access_key_id`,
+                `aws_secret_access_key`, `aws_session_token`, `region_name`,
+                and `endpoint_url`. When omitted, the default AWS credential
+                chain is used. Defaults to None.
             prefix_levels_to_add (int): Number of parent directory levels to
                 prepend as an underscore-separated prefix to the S3 object name.
                 Example: for remote path "2025/02/file.xlsx" and levels=2,
@@ -1707,11 +1708,6 @@ class SMBClient(Source):
             list[str]: List of S3 paths where files were successfully uploaded.
                 Files that were skipped (e.g., due to invalid filenames) are
                 not included in this list.
-
-        Raises:
-            CredentialError: If `aws_credentials` is not a dictionary, is empty,
-                or missing required fields (`aws_access_key_id` and
-                `aws_secret_access_key`).
         """
         return stream_smb_files_to_s3(
             smb_file_paths=smb_file_paths,
