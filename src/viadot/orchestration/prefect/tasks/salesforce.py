@@ -11,7 +11,7 @@ from viadot.sources import Salesforce
 @task(retries=3, log_prints=True, retry_delay_seconds=10, timeout_seconds=60 * 60)
 def salesforce_to_df(
     config_key: str | None = None,
-    azure_key_vault_secret: str | None = None,
+    salesforce_credentials_secret: str | None = None,
     env: str | None = None,
     domain: str | None = None,
     client_id: str | None = None,
@@ -24,8 +24,8 @@ def salesforce_to_df(
     Args:
         config_key (str, optional): The key in the viadot config holding relevant
             credentials. Defaults to None.
-        azure_key_vault_secret (str, optional): The name of the Azure Key Vault secret
-            where credentials are stored. Defaults to None.
+        salesforce_credentials_secret (str, optional): Name of the AWS secret
+            in the secrets manager. Defaults to None.
         env (str, optional): Environment information, provides information about
             credential and connection configuration. Defaults to 'DEV'.
         domain (str, optional): Domain of a connection. defaults to 'test' (sandbox).
@@ -43,11 +43,11 @@ def salesforce_to_df(
     Returns:
         pd.DataFrame: The response data as a pandas DataFrame.
     """
-    if not (azure_key_vault_secret or config_key):
+    if not (salesforce_credentials_secret or config_key):
         raise MissingSourceCredentialsError
 
     if not config_key:
-        credentials = get_credentials(azure_key_vault_secret)
+        credentials = get_credentials(salesforce_credentials_secret)
 
     salesforce = Salesforce(
         credentials=credentials,
