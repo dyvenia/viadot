@@ -123,11 +123,11 @@ class Salesforce(Source):
             columns_str = ", ".join(columns) if columns else "FIELDS(STANDARD)"
             query = f"SELECT {columns_str} FROM {table}"  # noqa: S608
 
-        data = self.salesforce.query(query).get("records")
+        data = self.salesforce.query_all(query).get("records") or []
 
         # Remove metadata from the data
         for record in data:
-            record.pop("attributes")
+            record.pop("attributes", None)
 
         df = pd.DataFrame(data)
 
