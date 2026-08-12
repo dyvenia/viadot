@@ -1,5 +1,7 @@
 """Salesforce API connector."""
 
+from collections.abc import Iterator
+from itertools import batched
 from typing import Literal
 
 import pandas as pd
@@ -11,7 +13,9 @@ from simple_salesforce.exceptions import SalesforceMalformedRequest
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns
+
+
+DEFAULT_CHUNK_SIZE = 50000
 
 
 class SalesforceCredentials(BaseModel):
@@ -72,7 +76,9 @@ class Salesforce(Source):
         super().__init__(*args, credentials=validated_creds, **kwargs)
         self.env = env.upper()
         self.domain = domain
-        self.instance_url = instance_url
+        self.instance_url = (
+            instance_url if self.env != "PROD" else "https://login.salesforce.com"
+        )
 
         if self.env in ("DEV", "QA") and not self.instance_url:
             message = (
@@ -106,14 +112,7 @@ class Salesforce(Source):
             message = "'consumer_secret' is required to generate a token."
             raise CredentialError(message)
 
-        if self.env == "PROD":
-            base_url = "https://login.salesforce.com"
-        else:
-            if not self.instance_url:
-                message = f"'instance_url' is required to generate a token for env='{self.env}'."
-                raise ValueError(message)
-            base_url = self.instance_url
-        token_url = f"{base_url}/services/oauth2/token"
+        token_url = f"{self.instance_url}/services/oauth2/token"
 
         payload = {
             "grant_type": "client_credentials",
@@ -136,27 +135,30 @@ class Salesforce(Source):
         self.logger.info("Successfully generated Salesforce access token.")
         return token_data
 
-    @add_viadot_metadata_columns
     def to_df(
         self,
         query: str | None = None,
         table: str | None = None,
         columns: list[str] | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
-    ) -> pd.DataFrame:
+        chunk_size: int | None = None,
+    ) -> Iterator[pd.DataFrame]:
         """Downloads data from Salesforce API and returns the DataFrame.
 
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
-                Defaults to "warn
+                Defaults to "warn".
             query (str, optional): The query to be used to download the data.
                 Defaults to None.
             table (str, optional): Table name. Defaults to None.
             columns (list[str], optional): List of required columns. Requires `table`
                 to be specified. Defaults to None.
+            chunk_size (int, optional): The number of rows to be fetched in each chunk.
+                Defaults to None, in which case DEFAULT_CHUNK_SIZE (50000) is used.
 
         Returns:
-            pd.DataFrame: Selected rows from Salesforce.
+            Iterator[pd.DataFrame]: An iterator of pandas DataFrames
+                containing the response data.
         """
         if not query:
             columns_str = ", ".join(columns) if columns else "FIELDS(STANDARD)"
@@ -164,13 +166,7 @@ class Salesforce(Source):
 
         data = self.salesforce.query_all(query).get("records") or []
 
-        # Remove metadata from the data
-        for record in data:
-            record.pop("attributes", None)
-
-        df = pd.DataFrame(data)
-
-        if df.empty:
+        if not data:
             self._handle_if_empty(
                 if_empty=if_empty,
                 message="The response does not contain any data.",
@@ -178,7 +174,12 @@ class Salesforce(Source):
         else:
             self.logger.info("Successfully downloaded data from the Salesforce API.")
 
-        return df
+        if chunk_size is None:
+            chunk_size = DEFAULT_CHUNK_SIZE
+
+        # Yield data in chunks to control memory use.
+        for chunk in batched(data, chunk_size):
+            yield pd.DataFrame(chunk).drop(columns=["attributes"], errors="ignore")
 
     def upsert(
         self,
