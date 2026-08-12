@@ -14,7 +14,6 @@ def salesforce_to_df(
     salesforce_credentials_secret: str | None = None,
     env: str | None = None,
     domain: str | None = None,
-    client_id: str | None = None,
     query: str | None = None,
     table: str | None = None,
     columns: list[str] | None = None,
@@ -30,8 +29,6 @@ def salesforce_to_df(
             credential and connection configuration. Defaults to 'DEV'.
         domain (str, optional): Domain of a connection. defaults to 'test' (sandbox).
             Can only be added if built-in username/password/security token is provided.
-            Defaults to None.
-        client_id (str, optional): Client id to keep the track of API calls.
             Defaults to None.
         query (str, optional): Query for download the data if specific download is
             needed. Defaults to None.
@@ -54,7 +51,6 @@ def salesforce_to_df(
         config_key=config_key,
         env=env,
         domain=domain,
-        client_id=client_id,
     )
 
     return salesforce.to_df(query=query, table=table, columns=columns)
