@@ -100,6 +100,7 @@ class Salesforce(Source):
             raise ValueError(message)
 
     def generate_token(self) -> dict:
+        """Generates an access token for the Salesforce API."""
         client_secret = self.credentials.get("consumer_secret")
         if not client_secret:
             message = "'consumer_secret' is required to generate a token."
