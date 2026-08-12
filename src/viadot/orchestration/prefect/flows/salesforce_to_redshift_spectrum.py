@@ -98,7 +98,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
         chunk_size=chunk_size,
     )
     chunk_count = 0
-    for i, chunk_df in enumerate(chunks):
+    for i, chunk_df in enumerate(list(chunks)):
         logger.info(f"chunk df shape={chunk_df.shape}")
         df_to_redshift_spectrum(
             df=chunk_df,
