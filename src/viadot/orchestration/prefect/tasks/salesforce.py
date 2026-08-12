@@ -1,5 +1,7 @@
 """Task to download data from Salesforce API into a Pandas DataFrame."""
 
+from collections.abc import Iterator
+
 import pandas as pd
 from prefect import task
 
@@ -17,7 +19,8 @@ def salesforce_to_df(
     query: str | None = None,
     table: str | None = None,
     columns: list[str] | None = None,
-) -> pd.DataFrame:
+    chunk_size: int | None = None,
+) -> Iterator[pd.DataFrame]:
     """Querying Salesforce and saving data as the data frame.
 
     Args:
@@ -36,9 +39,12 @@ def salesforce_to_df(
             Defaults to None.
         columns (list[str], optional): List of columns which are needed - table
             argument is needed. Defaults to None.
+        chunk_size (int, optional): The number of rows to be fetched in each chunk.
+            Defaults to None.
 
     Returns:
-        pd.DataFrame: The response data as a pandas DataFrame.
+        Iterator[pd.DataFrame]: An iterator of pandas DataFrames
+            containing the response data.
     """
     if not (salesforce_credentials_secret or config_key):
         raise MissingSourceCredentialsError
@@ -47,10 +53,8 @@ def salesforce_to_df(
         credentials = get_credentials(salesforce_credentials_secret)
 
     salesforce = Salesforce(
-        credentials=credentials,
-        config_key=config_key,
-        env=env,
-        domain=domain,
+        credentials=credentials, config_key=config_key, env=env, domain=domain
     )
-
-    return salesforce.to_df(query=query, table=table, columns=columns)
+    return salesforce.to_df(
+        query=query, table=table, columns=columns, chunk_size=chunk_size
+    )
