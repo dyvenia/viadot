@@ -20,6 +20,7 @@ def salesforce_to_df(
     table: str | None = None,
     columns: list[str] | None = None,
     chunk_size: int | None = None,
+    instance_url: str | None = None,
 ) -> Iterator[pd.DataFrame]:
     """Querying Salesforce and saving data as the data frame.
 
@@ -41,6 +42,8 @@ def salesforce_to_df(
             argument is needed. Defaults to None.
         chunk_size (int, optional): The number of rows to be fetched in each chunk.
             Defaults to None.
+        instance_url (str, optional): The Salesforce instance URL to use
+            when authenticating. Defaults to None.
 
     Returns:
         Iterator[pd.DataFrame]: An iterator of pandas DataFrames
@@ -53,7 +56,11 @@ def salesforce_to_df(
         credentials = get_credentials(salesforce_credentials_secret)
 
     salesforce = Salesforce(
-        credentials=credentials, config_key=config_key, env=env, domain=domain
+        credentials=credentials,
+        config_key=config_key,
+        env=env,
+        domain=domain,
+        instance_url=instance_url,
     )
     return salesforce.to_df(
         query=query, table=table, columns=columns, chunk_size=chunk_size

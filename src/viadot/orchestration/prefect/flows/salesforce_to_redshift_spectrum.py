@@ -35,6 +35,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
     salesforce_credentials_secret: str | None = None,
     env: str | None = None,
     domain: str | None = None,
+    instance_url: str | None = None,
     query: str | None = None,
     salesforce_table: str | None = None,
     columns: list[str] | None = None,
@@ -70,6 +71,8 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
             "sandbox". Defaults to None.
         domain (str, optional): The Salesforce domain to use when
             authenticating. Defaults to None.
+        instance_url (str, optional): The Salesforce instance URL to use
+            when authenticating. Defaults to None.
         query (str, optional): A custom SOQL query to use for extracting
             data from Salesforce. Defaults to None.
         salesforce_table (str, optional): The name of the Salesforce
@@ -83,6 +86,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
         salesforce_credentials_secret=salesforce_credentials_secret,
         env=env,
         domain=domain,
+        instance_url=instance_url,
         query=query,
         table=salesforce_table,
         columns=columns,
