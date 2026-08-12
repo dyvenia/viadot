@@ -126,9 +126,9 @@ def test_salesforce_invalid_env(mock_generate_token):  # noqa: ARG001
 @pytest.mark.connect
 def test_salesforce_to_df_with_columns(mock_sf_instance):
     """Test Salesforce `to_df` method with columns."""
-    mock_sf_instance.salesforce.query_all.return_value = {
-        "records": variables["records_2"]
-    }
+    mock_sf_instance.salesforce.query_all_iter.return_value = iter(
+        variables["records_2"]
+    )
 
     chunks = list(mock_sf_instance.to_df(table="Account", columns=["Id", "Name"]))
     result_df = pd.concat(chunks, ignore_index=True)
@@ -136,7 +136,7 @@ def test_salesforce_to_df_with_columns(mock_sf_instance):
     pd.testing.assert_frame_equal(
         result_df, pd.DataFrame([{"Id": "001", "Name": "Test Record"}])
     )
-    mock_sf_instance.salesforce.query_all.assert_called_once_with(
+    mock_sf_instance.salesforce.query_all_iter.assert_called_once_with(
         "SELECT Id, Name FROM Account"
     )
 
@@ -144,13 +144,15 @@ def test_salesforce_to_df_with_columns(mock_sf_instance):
 @pytest.mark.functions
 def test_salesforce_to_df(mock_sf_instance):
     """Test Salesforce `to_df` method."""
-    mock_sf_instance.salesforce.query_all.return_value = {"records": variables["data"]}
+    mock_sf_instance.salesforce.query_all_iter.return_value = iter(
+        variables["records_2"]
+    )
 
     chunks = list(mock_sf_instance.to_df())
     df = pd.concat(chunks, ignore_index=True)
 
     assert not df.empty
-    assert df.shape == (2, 2)
+    assert df.shape == (1, 2)
     assert list(df.columns) == ["Id", "Name"]
     assert df.iloc[0]["Id"] == "001"
 
