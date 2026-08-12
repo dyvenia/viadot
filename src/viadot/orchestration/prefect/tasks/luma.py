@@ -11,7 +11,7 @@ from prefect.logging import get_run_logger
 from viadot.orchestration.prefect.utils import shell_run_command
 
 
-@task(retries=2, retry_delay_seconds=5, timeout_seconds=60 * 10)
+@task(retries=2, retry_delay_seconds=60, timeout_seconds=60 * 10)
 async def luma_ingest_task(  # noqa: PLR0913
     metadata_dir_path: str | Path,
     luma_url: str = "http://localhost:8000",
