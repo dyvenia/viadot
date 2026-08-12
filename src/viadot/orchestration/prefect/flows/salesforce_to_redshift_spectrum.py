@@ -1,5 +1,6 @@
 """Extract data from Salesforce API and load it into AWS Redshift Spectrum."""
 
+import logging
 from typing import Literal
 
 from prefect import flow
@@ -84,6 +85,8 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to None.
     """
     logger = get_run_logger()
+    logger.setLevel(logging.DEBUG)
+    logger.info("Starting salesforce extraction.")
     chunks = salesforce_to_df(
         salesforce_credentials_secret=salesforce_credentials_secret,
         env=env,
@@ -94,6 +97,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
         columns=columns,
         chunk_size=chunk_size,
     )
+    chunk_count = 0
     for i, chunk_df in enumerate(chunks):
         logger.info(f"chunk df shape={chunk_df.shape}")
         df_to_redshift_spectrum(
@@ -109,3 +113,5 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
             config_key=aws_config_key,
             credentials_secret=credentials_secret,
         )
+        chunk_count += 1
+    logger.info(f"Processed {chunk_count} chunks.")
