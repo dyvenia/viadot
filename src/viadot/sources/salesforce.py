@@ -164,22 +164,20 @@ class Salesforce(Source):
             columns_str = ", ".join(columns) if columns else "FIELDS(STANDARD)"
             query = f"SELECT {columns_str} FROM {table}"  # noqa: S608
 
-        data = self.salesforce.query_all(query).get("records") or []
+        records_iter = self.salesforce.query_all_iter(query)
 
-        if not data:
+        chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
+        got_any_data = False
+        # Yield data in chunks to control memory use.
+        for chunk in batched(records_iter, chunk_size):
+            got_any_data = True
+            yield pd.DataFrame(chunk).drop(columns=["attributes"], errors="ignore")
+
+        if not got_any_data:
             self._handle_if_empty(
                 if_empty=if_empty,
                 message="The response does not contain any data.",
             )
-        else:
-            self.logger.info("Successfully downloaded data from the Salesforce API.")
-
-        if chunk_size is None:
-            chunk_size = DEFAULT_CHUNK_SIZE
-
-        # Yield data in chunks to control memory use.
-        for chunk in batched(data, chunk_size):
-            yield pd.DataFrame(chunk).drop(columns=["attributes"], errors="ignore")
 
     def upsert(
         self,
