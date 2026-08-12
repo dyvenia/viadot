@@ -4,6 +4,7 @@ from typing import Literal
 
 import pandas as pd
 from pydantic import BaseModel
+import requests
 from simple_salesforce import Salesforce as SimpleSalesforce
 from simple_salesforce.exceptions import SalesforceMalformedRequest
 
@@ -14,21 +15,17 @@ from viadot.utils import add_viadot_metadata_columns
 
 
 class SalesforceCredentials(BaseModel):
-    """Checking for values in Salesforce credentials dictionary.
+    """Credentials required to authenticate with the Salesforce API.
 
-    Two key values are held in the Salesforce connector:
-        - username: The unique name for the organization.
-        - password: The unique passwrod for the organization.
-        - token: A unique token to be used as the password for API requests.
-
-    Args:
-        BaseModel (pydantic.main.ModelMetaclass): A base class for creating
-            Pydantic models.
+    Attributes:
+        consumer_key (str): The client ID of the connected app used to
+            authenticate with Salesforce.
+        consumer_secret (str): The client secret of the connected app used to
+            authenticate with Salesforce.
     """
 
-    username: str
-    password: str
-    token: str
+    consumer_key: str
+    consumer_secret: str
 
 
 class Salesforce(Source):
@@ -45,7 +42,7 @@ class Salesforce(Source):
         config_key: str = "salesforce",
         env: Literal["DEV", "QA", "PROD"] = "DEV",
         domain: str = "test",
-        client_id: str = "viadot",
+        instance_url: str | None = None,
         **kwargs,
     ):
         """A class for downloading data from Salesforce.
@@ -61,41 +58,82 @@ class Salesforce(Source):
             domain (str, optional): Domain of a connection. Defaults to 'test'
                 (sandbox). Can only be added if a username/password/security token
                 is provided.
-            client_id (str, optional): Client id, keep track of API calls.
-                Defaults to 'viadot'.
+            instance_url (str, optional): instance URL of the Salesforce API.
+                Defaults to None.
         """
         credentials = credentials or get_source_credentials(config_key)
 
-        if not (
-            credentials.get("username")
-            and credentials.get("password")
-            and credentials.get("token")
-        ):
-            message = "'username', 'password' and 'token' credentials are required."
-            raise CredentialError(message)
+        try:
+            validated_creds = dict(SalesforceCredentials(**credentials))
+        except Exception as error:
+            error_message = "Error validating Salesforce credentials. "
+            raise CredentialError(error_message) from error
 
-        validated_creds = dict(SalesforceCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
+        self.env = env.upper()
+        self.domain = domain
+        self.instance_url = instance_url
 
-        if env.upper() == "DEV" or env.upper() == "QA":
+        if self.env in ("DEV", "QA") and not self.instance_url:
+            message = (
+                f"'instance_url' is required when env='{self.env}'. "
+                "Provide it explicitly, e.g. instance_url='https://your-domain.my.salesforce.com'."
+            )
+            raise ValueError(message)
+
+        self.token = self.generate_token()
+
+        if self.env in {"DEV", "QA"}:
             self.salesforce = SimpleSalesforce(
-                username=self.credentials["username"],
-                password=self.credentials["password"],
-                security_token=self.credentials["token"],
-                domain=domain,
-                client_id=client_id,
+                session_id=self.token["access_token"],
+                domain=self.domain,
+                instance_url=self.instance_url,
             )
 
         elif env.upper() == "PROD":
             self.salesforce = SimpleSalesforce(
-                username=self.credentials["username"],
-                password=self.credentials["password"],
-                security_token=self.credentials["token"],
+                session_id=self.token["access_token"],
             )
 
         else:
             message = "The only available environments are DEV, QA, and PROD."
             raise ValueError(message)
+
+    def generate_token(self) -> dict:
+        client_secret = self.credentials.get("consumer_secret")
+        if not client_secret:
+            message = "'consumer_secret' is required to generate a token."
+            raise CredentialError(message)
+
+        if self.env == "PROD":
+            base_url = "https://login.salesforce.com"
+        else:
+            if not self.instance_url:
+                message = f"'instance_url' is required to generate a token for env='{self.env}'."
+                raise ValueError(message)
+            base_url = self.instance_url
+        token_url = f"{base_url}/services/oauth2/token"
+
+        payload = {
+            "grant_type": "client_credentials",
+            "client_id": self.credentials["consumer_key"],
+            "client_secret": self.credentials["consumer_secret"],
+        }
+
+        response = requests.post(token_url, data=payload, timeout=30)
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            message = (
+                f"Failed to generate Salesforce token: "
+                f"{response.status_code} - {response.text}"
+            )
+            raise ValueError(message) from e
+
+        token_data = response.json()
+        self.logger.info("Successfully generated Salesforce access token.")
+        return token_data
 
     @add_viadot_metadata_columns
     def to_df(
