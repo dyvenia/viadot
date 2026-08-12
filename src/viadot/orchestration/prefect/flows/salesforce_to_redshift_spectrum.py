@@ -3,6 +3,7 @@
 from typing import Literal
 
 from prefect import flow
+from prefect.logging import get_run_logger
 
 from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
@@ -82,6 +83,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
         chunk_size (int, optional): The number of rows to be fetched in each chunk.
             Defaults to None.
     """
+    logger = get_run_logger()
     chunks = salesforce_to_df(
         salesforce_credentials_secret=salesforce_credentials_secret,
         env=env,
@@ -93,6 +95,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
         chunk_size=chunk_size,
     )
     for i, chunk_df in enumerate(chunks):
+        logger.info(f"chunk df shape={chunk_df.shape}")
         df_to_redshift_spectrum(
             df=chunk_df,
             to_path=to_path,
