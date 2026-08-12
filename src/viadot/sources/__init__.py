@@ -86,11 +86,15 @@ if find_spec("s3fs"):
 
     __all__.extend(["S3", "MinIO"])
 
-if find_spec("pyrfc"):
-    from viadot.sources.sap_bw import SAPBW  # noqa: F401
+if find_spec("sap_rfc_connector"):
     from viadot.sources.sap_rfc import SAPRFC  # noqa: F401
 
-    __all__.extend(["SAPBW", "SAPRFC"])
+    __all__.extend(["SAPRFC"])
+
+if find_spec("pyrfc"):
+    from viadot.sources.sap_bw import SAPBW  # noqa: F401
+
+    __all__.extend(["SAPBW"])
 
 if find_spec("pyspark"):
     from viadot.sources.databricks import Databricks  # noqa: F401
