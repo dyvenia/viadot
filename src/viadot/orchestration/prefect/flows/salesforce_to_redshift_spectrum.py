@@ -38,6 +38,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
     query: str | None = None,
     salesforce_table: str | None = None,
     columns: list[str] | None = None,
+    chunk_size: int | None = None,
 ) -> None:
     """Extract data from Salesforce API and load it into AWS Redshift Spectrum.
 
@@ -77,26 +78,29 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
             table to extract data from. Defaults to None.
         columns (list[str], optional): The list of columns to extract from
             the Salesforce table. Defaults to None.
+        chunk_size (int, optional): The number of rows to be fetched in each chunk.
+            Defaults to None.
     """
-    df = salesforce_to_df(
+    chunks = salesforce_to_df(
         salesforce_credentials_secret=salesforce_credentials_secret,
         env=env,
         domain=domain,
         query=query,
         table=salesforce_table,
         columns=columns,
+        chunk_size=chunk_size,
     )
-
-    df_to_redshift_spectrum(
-        df=df,
-        to_path=to_path,
-        schema_name=schema_name,
-        table=table,
-        extension=extension,
-        if_exists=if_exists,
-        partition_cols=partition_cols,
-        compression=compression,
-        sep=sep,
-        config_key=aws_config_key,
-        credentials_secret=credentials_secret,
-    )
+    for i, chunk_df in enumerate(chunks):
+        df_to_redshift_spectrum(
+            df=chunk_df,
+            to_path=to_path,
+            schema_name=schema_name,
+            table=table,
+            extension=extension,
+            if_exists=if_exists if i == 0 else "append",
+            partition_cols=partition_cols,
+            compression=compression,
+            sep=sep,
+            config_key=aws_config_key,
+            credentials_secret=credentials_secret,
+        )
