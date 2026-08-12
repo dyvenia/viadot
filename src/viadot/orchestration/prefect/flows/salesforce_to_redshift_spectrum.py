@@ -70,8 +70,6 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
             "sandbox". Defaults to None.
         domain (str, optional): The Salesforce domain to use when
             authenticating. Defaults to None.
-        client_id (str, optional): The client ID to use for the connection.
-            Defaults to None.
         query (str, optional): A custom SOQL query to use for extracting
             data from Salesforce. Defaults to None.
         salesforce_table (str, optional): The name of the Salesforce
