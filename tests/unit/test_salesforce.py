@@ -76,7 +76,7 @@ def mock_sf_instance(mocker):
 
 
 @pytest.fixture
-def salesforce_instance(mock_sf_instance, mock_generate_token):
+def salesforce_instance(mock_sf_instance, mock_generate_token):  # noqa: ARG001
     """Fixture providing a Salesforce instance with mocked auth and API client."""
     return Salesforce(
         credentials=variables["credentials"],
@@ -85,7 +85,7 @@ def salesforce_instance(mock_sf_instance, mock_generate_token):
 
 
 @pytest.mark.basic
-def test_salesforce_init_dev_env(mock_sf_instance, mock_generate_token):
+def test_salesforce_init_dev_env(mock_sf_instance, mock_generate_token):  # noqa: ARG001
     """Test Salesforce, starting in dev mode."""
     sf_instance = Salesforce(
         credentials=variables["credentials"], instance_url="https://test.salesforce.com"
@@ -107,7 +107,7 @@ class TestSalesforceCredentials:
 
 
 @pytest.mark.basic
-def test_salesforce_init_prod_env(mock_sf_instance, mock_generate_token):
+def test_salesforce_init_prod_env(mock_sf_instance, mock_generate_token):  # noqa: ARG001
     """Test Salesforce, starting in prod mode."""
     sf_instance = Salesforce(credentials=variables["credentials"], env="PROD")
 
@@ -115,7 +115,7 @@ def test_salesforce_init_prod_env(mock_sf_instance, mock_generate_token):
 
 
 @pytest.mark.basic
-def test_salesforce_invalid_env(mock_generate_token):
+def test_salesforce_invalid_env(mock_generate_token):  # noqa: ARG001
     """Test Salesforce, invalid `env` parameter."""
     with pytest.raises(
         ValueError, match="The only available environments are DEV, QA, and PROD."
