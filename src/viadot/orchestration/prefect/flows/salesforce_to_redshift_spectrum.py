@@ -1,12 +1,14 @@
 """Extract data from Salesforce API and load it into AWS Redshift Spectrum."""
 
-from typing import Any, Literal
+from typing import Literal
+
 from prefect import flow
 
 from viadot.orchestration.prefect.tasks import (
     df_to_redshift_spectrum,
     salesforce_to_df,
-)from viadot.orchestration.prefect.utils import (
+)
+from viadot.orchestration.prefect.utils import (
     with_flow_timeout_param,
     with_state_tracking_and_downstream_triggering,
 )
@@ -35,10 +37,8 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
     domain: str | None = None,
     client_id: str | None = None,
     query: str | None = None,
-    salesforce_table_table: str | None = None,
+    salesforce_table: str | None = None,
     columns: list[str] | None = None,
-
-
 ) -> None:
     """Extract data from Salesforce API and load it into AWS Redshift Spectrum.
 
@@ -74,7 +74,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to None.
         query (str, optional): A custom SOQL query to use for extracting
             data from Salesforce. Defaults to None.
-        salesforce_table_table (str, optional): The name of the Salesforce
+        salesforce_table (str, optional): The name of the Salesforce
             table to extract data from. Defaults to None.
         columns (list[str], optional): The list of columns to extract from
             the Salesforce table. Defaults to None.
@@ -85,7 +85,7 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
         domain=domain,
         client_id=client_id,
         query=query,
-        table=salesforce_table_table,
+        table=salesforce_table,
         columns=columns,
     )
 
