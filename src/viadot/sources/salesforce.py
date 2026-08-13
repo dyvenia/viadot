@@ -13,6 +13,7 @@ from simple_salesforce.exceptions import SalesforceMalformedRequest
 from viadot.config import get_source_credentials
 from viadot.exceptions import CredentialError
 from viadot.sources.base import Source
+from viadot.utils import add_viadot_metadata_columns
 
 
 DEFAULT_CHUNK_SIZE = 50000
@@ -135,6 +136,7 @@ class Salesforce(Source):
         self.logger.info("Successfully generated Salesforce access token.")
         return token_data
 
+    @add_viadot_metadata_columns
     def to_df(
         self,
         query: str | None = None,
