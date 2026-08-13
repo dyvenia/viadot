@@ -143,7 +143,7 @@ __all__ = [
 
 ## Adding docs
 
-To allow MkDocs to autogenerate and display documentation for your tasks and flows in [reference docs](../references/orchestration/prefect/tasks.md), add relevant entries in the reference docs (`docs/references/orchestration/prefect`). For example:
+To allow Zensical to autogenerate and display documentation for your tasks and flows in [reference docs](../references/orchestration/prefect/tasks.md), add relevant entries in the reference docs (`docs/references/orchestration/prefect`). For example:
 
 Task:
 

@@ -145,6 +145,14 @@ The release workflow will:
 - publish [the package](https://pypi.org/project/viadot2/) to PyPI
 - publish [Docker images](https://github.com/orgs/dyvenia/packages?repo_name=viadot) to ghcr.io
 
+#### Building the docs
+
+To run the docs locally, make sure to install the package with the `dev` dependency group (`uv sync` installs these by default), and then run:
+
+```console
+zensical serve
+```
+
 ### Running actions
 
 You can execute actions manually with [GitHub CLI](https://cli.github.com/manual/):
