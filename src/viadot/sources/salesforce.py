@@ -175,7 +175,7 @@ class Salesforce(Source):
             is_empty = True
             yield pd.DataFrame(chunk).drop(columns=["attributes"], errors="ignore")
 
-        if not is_empty:
+        if is_empty:
             self._handle_if_empty(
                 if_empty=if_empty,
                 message="The response does not contain any data.",
