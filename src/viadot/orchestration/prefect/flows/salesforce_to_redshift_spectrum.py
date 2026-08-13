@@ -1,6 +1,5 @@
 """Extract data from Salesforce API and load it into AWS Redshift Spectrum."""
 
-import logging
 from typing import Literal
 
 from prefect import flow
@@ -85,7 +84,6 @@ def salesforce_to_redshift_spectrum(  # noqa: PLR0913
             Defaults to None.
     """
     logger = get_run_logger()
-    logger.setLevel(logging.DEBUG)
     logger.info("Starting salesforce extraction.")
     chunks = salesforce_to_df(
         salesforce_credentials_secret=salesforce_credentials_secret,
