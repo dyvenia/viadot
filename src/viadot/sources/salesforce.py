@@ -167,13 +167,13 @@ class Salesforce(Source):
         records_iter = self.salesforce.query_all_iter(query)
 
         chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
-        got_any_data = False
+        is_empty = False
         # Yield data in chunks to control memory use.
         for chunk in batched(records_iter, chunk_size):
-            got_any_data = True
+            is_empty = True
             yield pd.DataFrame(chunk).drop(columns=["attributes"], errors="ignore")
 
-        if not got_any_data:
+        if not is_empty:
             self._handle_if_empty(
                 if_empty=if_empty,
                 message="The response does not contain any data.",
