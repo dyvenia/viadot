@@ -5,7 +5,6 @@ from typing import Any
 import pandas as pd
 from prefect import task
 
-from viadot.config import get_source_credentials
 from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.power_bi import PowerBIActivityEvents, PowerBICredentials
 
@@ -20,7 +19,6 @@ from viadot.sources.power_bi import PowerBIActivityEvents, PowerBICredentials
 def power_bi_activity_events_to_df(
     date: str | None = None,
     credentials: dict[str, Any] | None = None,
-    config_key: str = "power_bi",
     credentials_secret: str | None = None,
     columns_to_extract: list[str] | None = None,
 ) -> pd.DataFrame:
@@ -30,8 +28,6 @@ def power_bi_activity_events_to_df(
         date (str, Optional): date string 'YYYY-MM-DD' (UTC day to extract).
         credentials (dict[str, Any], optional): Dict with 'client_id' and
             'client_secret' for OAuth 2.0 authentication. Defaults to None.
-        config_key (str, optional): Key to look up credentials in viadot
-            config. Defaults to "power_bi".
         credentials_secret (str, optional): Name of the AWS secret containing
             Power BI credentials. Defaults to None.
         columns_to_extract (list(str)): List of columns to extract. Defaults to None.
@@ -39,15 +35,10 @@ def power_bi_activity_events_to_df(
     Returns:
         pd.DataFrame: Flat DataFrame with Power BI activity events.
     """
-    credentials = (
-        credentials
-        or get_source_credentials(config_key)
-        or get_credentials(credentials_secret)
-    )
+    credentials = credentials or get_credentials(credentials_secret)
 
     source = PowerBIActivityEvents(
         credentials=PowerBICredentials(**credentials),
-        config_key=config_key,
         columns_to_extract=columns_to_extract,
     )
     return source.to_df(date=date)
