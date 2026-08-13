@@ -1,5 +1,7 @@
 """Task to download data from Salesforce API into a Pandas DataFrame."""
 
+from collections.abc import Iterator
+
 import pandas as pd
 from prefect import task
 
@@ -19,7 +21,7 @@ def salesforce_to_df(
     columns: list[str] | None = None,
     chunk_size: int | None = None,
     instance_url: str | None = None,
-) -> list[pd.DataFrame]:
+) -> Iterator[pd.DataFrame]:
     """Querying Salesforce and saving data as the data frame.
 
     Args:
@@ -60,8 +62,6 @@ def salesforce_to_df(
         domain=domain,
         instance_url=instance_url,
     )
-    return list(
-        salesforce.to_df(
-            query=query, table=table, columns=columns, chunk_size=chunk_size
-        )
+    yield from salesforce.to_df(
+        query=query, table=table, columns=columns, chunk_size=chunk_size
     )
