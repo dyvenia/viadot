@@ -716,7 +716,7 @@ def download_file_from_smb(  # noqa: C901, PLR0915
     _ensure_smb_session(server=server, username=username, password=password)
 
     # Extract filename from remote path (basename)
-    filename = remote_path.split("\\")[-1].split("/")[-1]
+    filename = remote_path.rsplit("\\", maxsplit=1)[-1].rsplit("/", maxsplit=1)[-1]
 
     # Optionally build prefix from parent directories of the remote path
     if prefix_levels_to_add and prefix_levels_to_add > 0:
@@ -881,7 +881,7 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     """
     _ensure_smb_session(server=server, username=smb_username, password=smb_password)
 
-    filename = remote_path.split("\\")[-1].split("/")[-1]
+    filename = remote_path.rsplit("\\", maxsplit=1)[-1].rsplit("/", maxsplit=1)[-1]
     is_zip_with_filter = filename.lower().endswith(".zip") and zip_inner_file_regexes
 
     if is_zip_with_filter:
@@ -1668,7 +1668,7 @@ class SMBClient(Source):
         self,
         smb_file_paths: list[str],
         s3_path: str,
-        aws_credentials: dict[str, Any],
+        aws_credentials: dict[str, Any] | None = None,
         prefix_levels_to_add: int = 0,
         organize_by_year: bool = False,
         zip_inner_file_regexes: str | list[str] | None = None,
@@ -1684,10 +1684,11 @@ class SMBClient(Source):
                 share root.
             s3_path (str): Base S3 path (e.g. ``s3://bucket/folder/``).
                 Filenames will be appended automatically, optionally with prefix.
-            aws_credentials (dict[str, Any]): Required AWS credential mapping
-                used by the AWS CLI. Must include `aws_access_key_id` and
-                `aws_secret_access_key`. Can also include `aws_session_token`,
-                `region_name`, and `endpoint_url`.
+            aws_credentials (dict[str, Any] | None): Optional AWS credential
+                mapping. Can include `aws_access_key_id`,
+                `aws_secret_access_key`, `aws_session_token`, `region_name`,
+                and `endpoint_url`. When omitted, the default AWS credential
+                chain is used. Defaults to None.
             prefix_levels_to_add (int): Number of parent directory levels to
                 prepend as an underscore-separated prefix to the S3 object name.
                 Example: for remote path "2025/02/file.xlsx" and levels=2,
@@ -1707,26 +1708,7 @@ class SMBClient(Source):
             list[str]: List of S3 paths where files were successfully uploaded.
                 Files that were skipped (e.g., due to invalid filenames) are
                 not included in this list.
-
-        Raises:
-            CredentialError: If `aws_credentials` is not a dictionary, is empty,
-                or missing required fields (`aws_access_key_id` and
-                `aws_secret_access_key`).
         """
-        if not isinstance(aws_credentials, dict):
-            msg = "`aws_credentials` must be a dictionary."
-            raise CredentialError(msg)
-
-        if not (
-            aws_credentials.get("aws_access_key_id")
-            and aws_credentials.get("aws_secret_access_key")
-        ):
-            msg = (
-                "`aws_credentials` must include "
-                "`aws_access_key_id` and `aws_secret_access_key`."
-            )
-            raise CredentialError(msg)
-
         return stream_smb_files_to_s3(
             smb_file_paths=smb_file_paths,
             smb_server=self.server,
