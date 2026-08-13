@@ -186,10 +186,10 @@ if find_spec("adlfs"):
 
 ## Adding docs
 
-To allow MkDocs to autogenerate and display documentation for your source in [reference docs](../references/sources/sql_sources.md), add an entry in the reference docs (`docs/references/sources`). For example:
+To allow Zensical to autogenerate and display documentation for your source in [reference docs](../references/sources/database.md), add an entry in the reference docs (`docs/references/sources`). For example:
 
 ```markdown
-# docs/references/sources/sql_sources.md
+# docs/references/sources/database.md
 
 ...
 
@@ -260,7 +260,7 @@ def sharepoint():
 
 !!! info
 
-    For more information on viadot config, see [this page](../developer_guide/config_key.md).
+    For more information on viadot config, see [here](#using-viadot-config).
 
 ### Optional dependencies
 
@@ -281,7 +281,7 @@ except ImportError:
 
 In order to avoid storing and passing credentials through variables, source configuration should be stored in the viadot config file (by default, `~/.config/viadot/config.yaml`).
 
-You can find each source's configuration in [the documentation](../references/sources/sql_sources.md).
+You can find each source's configuration in [the documentation](../references/sources/database.md).
 
 Below is an example config file, with configurations for two sources:
 
