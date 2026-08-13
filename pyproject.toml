@@ -99,6 +99,7 @@ dev = [
     "pytest-mock>=3.14.0",
     "mkdocstrings>=0.29.1",
     "mkdocs-ultralytics-plugin>=0.1.18",
+    "zensical>=0.0.53",
 ]
 
 [tool.pytest.ini_options]
