@@ -18,4 +18,4 @@ jobs:
       project_manager: uv
       uv_sync_flags: --group docs
       static_site_branch: static-site
-    secrets: inherit
+    secrets: inherit # pragma: allowlist secret
