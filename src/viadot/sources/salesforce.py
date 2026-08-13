@@ -172,7 +172,7 @@ class Salesforce(Source):
         is_empty = True
         # Yield data in chunks to control memory use.
         for chunk in batched(records_iter, chunk_size):
-            is_empty = True
+            is_empty = False
             yield pd.DataFrame(chunk).drop(columns=["attributes"], errors="ignore")
 
         if is_empty:
