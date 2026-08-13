@@ -169,7 +169,7 @@ class Salesforce(Source):
         records_iter = self.salesforce.query_all_iter(query)
 
         chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
-        is_empty = False
+        is_empty = True
         # Yield data in chunks to control memory use.
         for chunk in batched(records_iter, chunk_size):
             is_empty = True
