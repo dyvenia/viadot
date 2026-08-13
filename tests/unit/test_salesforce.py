@@ -132,7 +132,9 @@ def test_salesforce_to_df_with_columns(mock_sf_instance):
 
     chunks = list(mock_sf_instance.to_df(table="Account", columns=["Id", "Name"]))
     result_df = pd.concat(chunks, ignore_index=True)
-
+    result_df.drop(
+        columns=["_viadot_source", "_viadot_downloaded_at_utc"], inplace=True
+    )
     pd.testing.assert_frame_equal(
         result_df, pd.DataFrame([{"Id": "001", "Name": "Test Record"}])
     )
@@ -150,7 +152,7 @@ def test_salesforce_to_df(mock_sf_instance):
 
     chunks = list(mock_sf_instance.to_df())
     df = pd.concat(chunks, ignore_index=True)
-
+    df.drop(columns=["_viadot_source", "_viadot_downloaded_at_utc"], inplace=True)
     assert not df.empty
     assert df.shape == (1, 2)
     assert list(df.columns) == ["Id", "Name"]
