@@ -13,7 +13,7 @@ on:
 
 jobs:
   deploy:
-    uses: dyvenia/workflow-templates/.github/workflows/template-static-site-prepare-zensical.yml@feat/migrate-to-zensical
+    uses: dyvenia/workflow-templates/.github/workflows/template-static-site-prepare-zensical.yml@main
     with:
       project_manager: uv
       uv_sync_flags: --group docs
