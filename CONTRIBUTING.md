@@ -147,7 +147,7 @@ The release workflow will:
 
 #### Building the docs
 
-To run the docs locally, make sure to install the package with the `dev` and `docs` dependency group (`uv sync` and `uv sync --group docs`), and then run:
+To run the docs locally, make sure to install the package with the `docs` dependency group (`uv sync --group docs`), and then run:
 
 ```console
 uv run zensical serve
