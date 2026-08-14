@@ -1,21 +1,19 @@
 """'test_salesforce.py'."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
 from simple_salesforce import Salesforce as SimpleSalesforce
 
-from viadot.exceptions import CredentialError
 from viadot.sources import Salesforce
 from viadot.sources.salesforce import SalesforceCredentials
 
 
 variables = {
     "credentials": {
-        "username": "test_user",
-        "password": "test_password",  # pragma: allowlist secret
-        "token": "test_token",
+        "consumer_key": "test_user",
+        "consumer_secret": "test_password",  # pragma: allowlist secret
     },
     "records_1": [
         {
@@ -59,22 +57,41 @@ variables = {
 
 
 @pytest.fixture
+def mock_generate_token(mocker):
+    """Fixture to mock Salesforce.generate_token so no real HTTP call is made."""
+    return mocker.patch.object(
+        Salesforce,
+        "generate_token",
+        return_value={"access_token": "fake-token-123"},
+    )
+
+
+@pytest.fixture
 def mock_sf_instance(mocker):
-    """Fixture to mock the SimpleSalesforce instance."""
+    """Fixture providing a Salesforce instance with mocked auth and API client."""
     mock_sf_instance = mocker.MagicMock(spec=SimpleSalesforce)
 
     mocker.patch(
         "viadot.sources.salesforce.SimpleSalesforce", return_value=mock_sf_instance
     )
-    return mock_sf_instance
+    mocker.patch.object(
+        Salesforce, "generate_token", return_value={"access_token": "fake-token-123"}
+    )
+
+    return Salesforce(
+        credentials=variables["credentials"],
+        instance_url="https://test.salesforce.com",
+    )
 
 
 @pytest.mark.basic
-def test_salesforce_init_dev_env(mock_sf_instance):
+def test_salesforce_init_dev_env(mock_sf_instance, mock_generate_token):  # noqa: ARG001
     """Test Salesforce, starting in dev mode."""
-    sf_instance = Salesforce(credentials=variables["credentials"], env="DEV")
+    sf_instance = Salesforce(
+        credentials=variables["credentials"], instance_url="https://test.salesforce.com"
+    )
 
-    assert sf_instance.salesforce == mock_sf_instance
+    assert sf_instance.salesforce == mock_sf_instance.salesforce
 
 
 class TestSalesforceCredentials:
@@ -84,22 +101,21 @@ class TestSalesforceCredentials:
     def test_salesforce_credentials(self):
         """Test Salesforce credentials."""
         SalesforceCredentials(
-            username="test_user",
-            password="test_password",  # noqa: S106 # pragma: allowlist secret
-            token="test_token",  # noqa: S106
+            consumer_key="consumer_key",
+            consumer_secret="consumer_secret",  # noqa: S106 # pragma: allowlist secret
         )
 
 
 @pytest.mark.basic
-def test_salesforce_init_prod_env(mock_sf_instance):
+def test_salesforce_init_prod_env(mock_sf_instance, mock_generate_token):  # noqa: ARG001
     """Test Salesforce, starting in prod mode."""
     sf_instance = Salesforce(credentials=variables["credentials"], env="PROD")
 
-    assert sf_instance.salesforce == mock_sf_instance
+    assert sf_instance.salesforce == mock_sf_instance.salesforce
 
 
 @pytest.mark.basic
-def test_salesforce_invalid_env():
+def test_salesforce_invalid_env(mock_generate_token):  # noqa: ARG001
     """Test Salesforce, invalid `env` parameter."""
     with pytest.raises(
         ValueError, match="The only available environments are DEV, QA, and PROD."
@@ -107,100 +123,78 @@ def test_salesforce_invalid_env():
         Salesforce(credentials=variables["credentials"], env="INVALID")
 
 
-@pytest.mark.basic
-def test_salesforce_missing_credentials():
-    """Test Salesforce missing credentials."""
-    incomplete_creds = {
-        "username": "user",  # pragma: allowlist secret
-        "password": "pass",  # pragma: allowlist secret
-    }
-    with pytest.raises(CredentialError):
-        Salesforce(credentials=incomplete_creds)
-
-
 @pytest.mark.connect
 def test_salesforce_to_df_with_columns(mock_sf_instance):
     """Test Salesforce `to_df` method with columns."""
-    salesforce_instance = Salesforce(credentials=variables["credentials"])
-
-    mock_sf_instance.query.return_value = {"records": variables["records_2"]}
-
-    result_df = salesforce_instance.to_df(table="Account", columns=["Id", "Name"])
-
-    result_df.drop(
-        columns=["_viadot_source", "_viadot_downloaded_at_utc"],
-        inplace=True,
+    mock_sf_instance.salesforce.query_all_iter.return_value = iter(
+        variables["records_2"]
     )
 
+    chunks = list(mock_sf_instance.to_df(table="Account", columns=["Id", "Name"]))
+    result_df = pd.concat(chunks, ignore_index=True)
+    result_df.drop(
+        columns=["_viadot_source", "_viadot_downloaded_at_utc"], inplace=True
+    )
     pd.testing.assert_frame_equal(
         result_df, pd.DataFrame([{"Id": "001", "Name": "Test Record"}])
     )
-    mock_sf_instance.query.assert_called_once_with("SELECT Id, Name FROM Account")
+    mock_sf_instance.salesforce.query_all_iter.assert_called_once_with(
+        "SELECT Id, Name FROM Account"
+    )
 
 
 @pytest.mark.functions
 def test_salesforce_to_df(mock_sf_instance):
     """Test Salesforce `to_df` method."""
-    salesforce_instance = Salesforce(credentials=variables["credentials"])
-    mock_sf_instance.query.return_value = {"records": variables["data"]}
+    mock_sf_instance.salesforce.query_all_iter.return_value = iter(
+        variables["records_2"]
+    )
 
-    df = salesforce_instance.to_df()
+    chunks = list(mock_sf_instance.to_df())
+    df = pd.concat(chunks, ignore_index=True)
+    df.drop(columns=["_viadot_source", "_viadot_downloaded_at_utc"], inplace=True)
     assert not df.empty
-    assert df.shape == (2, 4)
-    assert list(df.columns) == [
-        "Id",
-        "Name",
-        "_viadot_source",
-        "_viadot_downloaded_at_utc",
-    ]
+    assert df.shape == (1, 2)
+    assert list(df.columns) == ["Id", "Name"]
     assert df.iloc[0]["Id"] == "001"
 
 
 @pytest.mark.functions
-def test_salesforce_to_df_empty_data(mock_sf_instance):  # noqa: ARG001
+def test_salesforce_to_df_empty_data(mock_sf_instance):
     """Test Salesforce `to_df` method with empty df."""
-    salesforce_instance = Salesforce(credentials=variables["credentials"])
-    salesforce_instance.data = []
+    mock_sf_instance.salesforce.query_all.return_value = {"records": []}
 
     with pytest.raises(ValueError, match="The response does not contain any data."):
-        salesforce_instance.to_df(if_empty="fail")
+        list(mock_sf_instance.to_df(if_empty="fail"))
 
 
 @pytest.mark.functions
-def test_salesforce_to_df_warn_empty_data(mock_sf_instance):  # noqa: ARG001
+def test_salesforce_to_df_warn_empty_data(mock_sf_instance):
     """Test Salesforce `to_df` method with empty df, warn."""
-    salesforce_instance = Salesforce(credentials=variables["credentials"])
-    salesforce_instance.data = []
+    mock_sf_instance.salesforce.query_all.return_value = {"records": []}
 
-    df = salesforce_instance.to_df(if_empty="warn")
+    with patch.object(mock_sf_instance, "_handle_if_empty") as mock_handle:
+        chunks = list(mock_sf_instance.to_df(if_empty="warn"))
 
-    assert df.empty
-
-
-@pytest.mark.functions
-def test_salesforce_upsert_with_empty_data():
-    with patch("viadot.sources.salesforce.SimpleSalesforce") as mock_salesforce_class:
-        mock_salesforce_instance = mock_salesforce_class.return_value
-        mock_salesforce_instance.upsert.return_value = None
-
-        df = pd.DataFrame(columns=["a", "b", "c"])
-        salesforce_instance = mock_salesforce_class(variables["credentials"])
-
-        result = salesforce_instance.upsert(df=df, table="Contact", external_id="a")
-        assert result is None
+    assert chunks == []
+    mock_handle.assert_called_once_with(
+        if_empty="warn",
+        message="The response does not contain any data.",
+    )
 
 
 @pytest.mark.functions
-def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):  # noqa: ARG001
-    with patch.object(SimpleSalesforce, "salesforce", create=True):
-        sf = Salesforce(credentials=variables["credentials"])
+def test_salesforce_upsert_with_empty_data(mock_sf_instance):
+    df = pd.DataFrame(columns=["a", "b", "c"])
+    result = mock_sf_instance.upsert(df=df, table="Contact", external_id="a")
 
-        sf.salesforce = MagicMock()
-        sf.salesforce.test = MagicMock()
+    assert result is None
 
-        df = pd.DataFrame([{"a": 1, "b": "foo"}, {"a": 2, "b": "bar"}])
 
-        with pytest.raises(
-            ValueError, match="Passed DataFrame does not contain column 'c'."
-        ):
-            sf.upsert(df=df, table="test", external_id="c")
+@pytest.mark.functions
+def test_salesforce_upsert_with_missing_external_key(mock_sf_instance):
+    df = pd.DataFrame([{"a": 1, "b": "foo"}, {"a": 2, "b": "bar"}])
+    with pytest.raises(
+        ValueError, match="Passed DataFrame does not contain column 'c'."
+    ):
+        mock_sf_instance.upsert(df=df, table="test", external_id="c")

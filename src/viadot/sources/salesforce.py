@@ -1,9 +1,12 @@
 """Salesforce API connector."""
 
+from collections.abc import Iterator
+from itertools import batched
 from typing import Literal
 
 import pandas as pd
 from pydantic import BaseModel
+import requests
 from simple_salesforce import Salesforce as SimpleSalesforce
 from simple_salesforce.exceptions import SalesforceMalformedRequest
 
@@ -13,22 +16,21 @@ from viadot.sources.base import Source
 from viadot.utils import add_viadot_metadata_columns
 
 
+DEFAULT_CHUNK_SIZE = 50000
+
+
 class SalesforceCredentials(BaseModel):
-    """Checking for values in Salesforce credentials dictionary.
+    """Credentials required to authenticate with the Salesforce API.
 
-    Two key values are held in the Salesforce connector:
-        - username: The unique name for the organization.
-        - password: The unique passwrod for the organization.
-        - token: A unique token to be used as the password for API requests.
-
-    Args:
-        BaseModel (pydantic.main.ModelMetaclass): A base class for creating
-            Pydantic models.
+    Attributes:
+        consumer_key (str): The client ID of the connected app used to
+            authenticate with Salesforce.
+        consumer_secret (str): The client secret of the connected app used to
+            authenticate with Salesforce.
     """
 
-    username: str
-    password: str
-    token: str
+    consumer_key: str
+    consumer_secret: str
 
 
 class Salesforce(Source):
@@ -45,7 +47,7 @@ class Salesforce(Source):
         config_key: str = "salesforce",
         env: Literal["DEV", "QA", "PROD"] = "DEV",
         domain: str = "test",
-        client_id: str = "viadot",
+        instance_url: str | None = None,
         **kwargs,
     ):
         """A class for downloading data from Salesforce.
@@ -61,41 +63,78 @@ class Salesforce(Source):
             domain (str, optional): Domain of a connection. Defaults to 'test'
                 (sandbox). Can only be added if a username/password/security token
                 is provided.
-            client_id (str, optional): Client id, keep track of API calls.
-                Defaults to 'viadot'.
+            instance_url (str, optional): instance URL of the Salesforce API.
+                Defaults to None.
         """
         credentials = credentials or get_source_credentials(config_key)
 
-        if not (
-            credentials.get("username")
-            and credentials.get("password")
-            and credentials.get("token")
-        ):
-            message = "'username', 'password' and 'token' credentials are required."
-            raise CredentialError(message)
+        try:
+            validated_creds = dict(SalesforceCredentials(**credentials))
+        except Exception as error:
+            error_message = "Error validating Salesforce credentials. "
+            raise CredentialError(error_message) from error
 
-        validated_creds = dict(SalesforceCredentials(**credentials))
         super().__init__(*args, credentials=validated_creds, **kwargs)
+        self.env = env.upper()
+        self.domain = domain
+        self.instance_url = (
+            instance_url if self.env != "PROD" else "https://login.salesforce.com"
+        )
 
-        if env.upper() == "DEV" or env.upper() == "QA":
+        if self.env in ("DEV", "QA") and not self.instance_url:
+            message = (
+                f"'instance_url' is required when env='{self.env}'. "
+                "Provide it explicitly, e.g. instance_url='https://your-domain.my.salesforce.com'."
+            )
+            raise ValueError(message)
+
+        self.token = self.generate_token()
+
+        if self.env in {"DEV", "QA"}:
             self.salesforce = SimpleSalesforce(
-                username=self.credentials["username"],
-                password=self.credentials["password"],
-                security_token=self.credentials["token"],
-                domain=domain,
-                client_id=client_id,
+                session_id=self.token["access_token"],
+                domain=self.domain,
+                instance_url=self.instance_url,
             )
 
         elif env.upper() == "PROD":
             self.salesforce = SimpleSalesforce(
-                username=self.credentials["username"],
-                password=self.credentials["password"],
-                security_token=self.credentials["token"],
+                session_id=self.token["access_token"],
             )
 
         else:
             message = "The only available environments are DEV, QA, and PROD."
             raise ValueError(message)
+
+    def generate_token(self) -> dict:
+        """Generates an access token for the Salesforce API."""
+        client_secret = self.credentials.get("consumer_secret")
+        if not client_secret:
+            message = "'consumer_secret' is required to generate a token."
+            raise CredentialError(message)
+
+        token_url = f"{self.instance_url}/services/oauth2/token"
+
+        payload = {
+            "grant_type": "client_credentials",
+            "client_id": self.credentials["consumer_key"],
+            "client_secret": self.credentials["consumer_secret"],
+        }
+
+        response = requests.post(token_url, data=payload, timeout=30)
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            message = (
+                f"Failed to generate Salesforce token: "
+                f"{response.status_code} - {response.text}"
+            )
+            raise ValueError(message) from e
+
+        token_data = response.json()
+        self.logger.info("Successfully generated Salesforce access token.")
+        return token_data
 
     @add_viadot_metadata_columns
     def to_df(
@@ -104,42 +143,43 @@ class Salesforce(Source):
         table: str | None = None,
         columns: list[str] | None = None,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
-    ) -> pd.DataFrame:
+        chunk_size: int | None = None,
+    ) -> Iterator[pd.DataFrame]:
         """Downloads data from Salesforce API and returns the DataFrame.
 
         Args:
             if_empty (str, optional): What to do if a fetch produce no data.
-                Defaults to "warn
+                Defaults to "warn".
             query (str, optional): The query to be used to download the data.
                 Defaults to None.
             table (str, optional): Table name. Defaults to None.
             columns (list[str], optional): List of required columns. Requires `table`
                 to be specified. Defaults to None.
+            chunk_size (int, optional): The number of rows to be fetched in each chunk.
+                Defaults to None, in which case DEFAULT_CHUNK_SIZE (50000) is used.
 
         Returns:
-            pd.DataFrame: Selected rows from Salesforce.
+            Iterator[pd.DataFrame]: An iterator of pandas DataFrames
+                containing the response data.
         """
         if not query:
             columns_str = ", ".join(columns) if columns else "FIELDS(STANDARD)"
             query = f"SELECT {columns_str} FROM {table}"  # noqa: S608
 
-        data = self.salesforce.query(query).get("records")
+        records_iter = self.salesforce.query_all_iter(query)
 
-        # Remove metadata from the data
-        for record in data:
-            record.pop("attributes")
+        chunk_size = chunk_size or DEFAULT_CHUNK_SIZE
+        is_empty = True
+        # Yield data in chunks to control memory use.
+        for chunk in batched(records_iter, chunk_size):
+            is_empty = False
+            yield pd.DataFrame(chunk).drop(columns=["attributes"], errors="ignore")
 
-        df = pd.DataFrame(data)
-
-        if df.empty:
+        if is_empty:
             self._handle_if_empty(
                 if_empty=if_empty,
                 message="The response does not contain any data.",
             )
-        else:
-            self.logger.info("Successfully downloaded data from the Salesforce API.")
-
-        return df
 
     def upsert(
         self,
