@@ -8117,6 +8117,14 @@ dev = [
     { name = "coverage", extra = ["toml"] },
     { name = "faker" },
     { name = "loguru" },
+    { name = "moto" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-mock" },
+    { name = "python-dotenv" },
+    { name = "ruff" },
+]
+docs = [
     { name = "mike" },
     { name = "mkdocs" },
     { name = "mkdocs-git-revision-date-plugin" },
@@ -8130,13 +8138,7 @@ dev = [
     { name = "mkdocs-ultralytics-plugin" },
     { name = "mkdocstrings" },
     { name = "mkdocstrings-python" },
-    { name = "moto" },
     { name = "neoteroi-mkdocs" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-mock" },
-    { name = "python-dotenv" },
-    { name = "ruff" },
     { name = "zensical" },
 ]
 
@@ -8207,6 +8209,14 @@ dev = [
     { name = "coverage", extras = ["toml"], specifier = ">=7.6.1" },
     { name = "faker", specifier = "==13.12.1" },
     { name = "loguru", specifier = ">=0.7.2" },
+    { name = "moto", specifier = ">=5.0.13" },
+    { name = "pytest", specifier = ">=8.2.2" },
+    { name = "pytest-asyncio", specifier = ">=0.23.8" },
+    { name = "pytest-mock", specifier = ">=3.14.0" },
+    { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "ruff", specifier = ">=0.6.6" },
+]
+docs = [
     { name = "mike", specifier = ">=2.1.3" },
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "mkdocs-git-revision-date-plugin", specifier = ">=0.3.2" },
@@ -8220,13 +8230,7 @@ dev = [
     { name = "mkdocs-ultralytics-plugin", specifier = ">=0.1.18" },
     { name = "mkdocstrings", specifier = ">=0.29.1" },
     { name = "mkdocstrings-python", specifier = ">=1.16.10" },
-    { name = "moto", specifier = ">=5.0.13" },
     { name = "neoteroi-mkdocs", specifier = ">=1.1.2" },
-    { name = "pytest", specifier = ">=8.2.2" },
-    { name = "pytest-asyncio", specifier = ">=0.23.8" },
-    { name = "pytest-mock", specifier = ">=3.14.0" },
-    { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "ruff", specifier = ">=0.6.6" },
     { name = "zensical", specifier = ">=0.0.53" },
 ]
 
