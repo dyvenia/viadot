@@ -101,6 +101,9 @@ dev = [
     "mkdocs-ultralytics-plugin>=0.1.18",
     "zensical>=0.0.53",
 ]
+docs = [
+    "zensical>=0.0.53",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

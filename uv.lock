@@ -8139,6 +8139,9 @@ dev = [
     { name = "ruff" },
     { name = "zensical" },
 ]
+docs = [
+    { name = "zensical" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -8229,6 +8232,7 @@ dev = [
     { name = "ruff", specifier = ">=0.6.6" },
     { name = "zensical", specifier = ">=0.0.53" },
 ]
+docs = [{ name = "zensical", specifier = ">=0.0.53" }]
 
 [[package]]
 name = "visions"
