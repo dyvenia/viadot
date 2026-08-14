@@ -8123,7 +8123,6 @@ dev = [
     { name = "pytest-mock" },
     { name = "python-dotenv" },
     { name = "ruff" },
-    { name = "zensical" },
 ]
 docs = [
     { name = "mike" },
@@ -8216,7 +8215,6 @@ dev = [
     { name = "pytest-mock", specifier = ">=3.14.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "ruff", specifier = ">=0.6.6" },
-    { name = "zensical", specifier = ">=0.0.53" },
 ]
 docs = [
     { name = "mike", specifier = ">=2.1.3" },
