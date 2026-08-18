@@ -13,9 +13,9 @@ on:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/template_static_site_prepare_mkdocs.yml
+    uses: ./.github/workflows/template_static_site_prepare_zensical.yml
     with:
+      project_manager: uv
+      uv_sync_flags: --group docs
       static_site_branch: static-site
-      mkdocs_config: mkdocs.yml
-      site_dir: site
     secrets: inherit # pragma: allowlist secret

@@ -1,9 +1,10 @@
 """Util functions."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 import contextlib
 from datetime import datetime, timedelta, timezone
 import functools
+import inspect
 import logging
 import re
 import subprocess
@@ -607,18 +608,30 @@ def add_viadot_metadata_columns(func: Callable) -> Callable:
     Adds viadot metadata columns to the returned DataFrame.
     """
 
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> pd.DataFrame:
-        df = func(*args, **kwargs)
-
-        # Accessing instance
-        instance = args[0]
-        _viadot_source = instance.__class__.__name__
-        df["_viadot_source"] = _viadot_source
+    def _add_columns(df: pd.DataFrame, source_name: str) -> pd.DataFrame:
+        df["_viadot_source"] = source_name
         df["_viadot_downloaded_at_utc"] = datetime.now(timezone.utc).replace(
             microsecond=0
         )
         return df
+
+    if inspect.isgeneratorfunction(func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs) -> Generator[pd.DataFrame, None, None]:
+            instance = args[0]
+            _viadot_source = instance.__class__.__name__
+            for df in func(*args, **kwargs):
+                yield _add_columns(df, _viadot_source)
+
+        return wrapper
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> pd.DataFrame:
+        instance = args[0]
+        _viadot_source = instance.__class__.__name__
+        df = func(*args, **kwargs)
+        return _add_columns(df, _viadot_source)
 
     return wrapper
 

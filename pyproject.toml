@@ -80,6 +80,14 @@ dev = [
     "coverage[toml]>=7.6.1",
     "aiohttp>=3.9.5",
     "loguru>=0.7.2",
+    "pytest>=8.2.2",
+    "ruff>=0.6.6",
+    "pytest-asyncio>=0.23.8",
+    "moto>=5.0.13",
+    "pytest-mock>=3.14.0",
+]
+docs = [
+    "zensical>=0.0.53",
     "mkdocs-material[imaging]>=9.6.14",
     "mkdocs-mermaid2-plugin>=1.1.0",
     "mkdocs-include-dir-to-nav>=1.2.0",
@@ -92,11 +100,6 @@ dev = [
     "mkdocs-include-markdown-plugin>=7.1.5",
     "mkdocs-git-revision-date-plugin>=0.3.2",
     "mkdocs-glightbox>=0.4.0",
-    "pytest>=8.2.2",
-    "ruff>=0.6.6",
-    "pytest-asyncio>=0.23.8",
-    "moto>=5.0.13",
-    "pytest-mock>=3.14.0",
     "mkdocstrings>=0.29.1",
     "mkdocs-ultralytics-plugin>=0.1.18",
 ]
