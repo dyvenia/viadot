@@ -42,6 +42,8 @@ from .postgresql import (
     postgresql_query,
     postgresql_to_df,
 )
+from .power_bi_activity_events_to_df import power_bi_activity_events_to_df
+from .power_bi_report_scanner_to_dfs import power_bi_workspace_info_to_dict
 from .redshift_spectrum import df_to_redshift_spectrum
 from .s3 import s3_upload_file
 from .salesforce import salesforce_to_df
@@ -84,7 +86,10 @@ __all__ = [
     "epicor_to_df",
     "eurostat_to_df",
     "exchange_rates_to_df",
+    "fetch_scan_results",
     "genesys_to_df",
+    "get_modified_workspace_ids",
+    "get_scan_ids",
     "hubspot_to_df",
     "informix_query",
     "informix_to_df",
@@ -99,6 +104,8 @@ __all__ = [
     "perspective_ingest_task",
     "postgresql_query",
     "postgresql_to_df",
+    "power_bi_activity_events_to_df",
+    "power_bi_workspace_info_to_dict",
     "s3_upload_file",
     "salesforce_to_df",
     "sap_bw_to_df",
