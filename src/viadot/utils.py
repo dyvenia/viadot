@@ -8,6 +8,7 @@ import inspect
 import logging
 import re
 import subprocess
+from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import pandas as pd
@@ -23,6 +24,8 @@ from requests.exceptions import (
     Timeout,
 )
 from requests.packages.urllib3.util.retry import Retry
+from urllib3 import BaseHTTPResponse
+from urllib3.connectionpool import ConnectionPool
 from urllib3.exceptions import ProtocolError
 
 from viadot.exceptions import APIError, ValidationError
@@ -41,6 +44,71 @@ with contextlib.suppress(ImportError):
 def slugify(name: str) -> str:
     """Slugify a string."""
     return name.replace(" ", "_").lower()
+
+
+class LoggingRetry(Retry):
+    """Retry strategy that logs each retry attempt."""
+
+    def __init__(
+        self,
+        *args,
+        log_statuses: set[int] | None = None,
+        logger_: logging.Logger | None = None,
+        **kwargs,
+    ):
+        """Initialize the retry strategy with optional status filtering and logger.
+
+        Args:
+            *args: Positional arguments passed to `Retry`.
+            log_statuses: HTTP status codes to log. If None, all statuses are logged.
+            logger_: Logger to use. Defaults to a module-level logger.
+            **kwargs: Keyword arguments passed to `Retry`.
+        """
+        super().__init__(*args, **kwargs)
+        self.log_statuses = log_statuses  # None = log all statuses
+        self.logger_ = logger_ or logging.getLogger(__name__)
+
+    def increment(
+        self,
+        method: str | None = None,
+        url: str | None = None,
+        response: BaseHTTPResponse | None = None,
+        error: Exception | None = None,
+        _pool: ConnectionPool | None = None,
+        _stacktrace: TracebackType | None = None,
+    ) -> Retry:
+        """Log the retry attempt before delegating to the parent implementation.
+
+        Args:
+            method: The HTTP method used for the request.
+            url: The URL of the request.
+            response: The HTTP response that triggered the retry, if any.
+            error: The exception that triggered the retry, if any.
+            _pool: The connection pool used for the request.
+            _stacktrace: The stack trace associated with the error, if any.
+
+        Returns:
+            A new `Retry` instance reflecting the incremented retry count.
+        """
+        if response is not None and (
+            self.log_statuses is None or response.status in self.log_statuses
+        ):
+            retry_after = response.headers.get("Retry-After", "none")
+            self.logger_.warning(
+                f"Retry: {method} {url} -> status={response.status} "
+                f"(Retry-After={retry_after})"
+            )
+        elif error is not None:
+            self.logger_.warning(f"Retry: {method} {url} -> error: {error}")
+
+        return super().increment(
+            method=method,
+            url=url,
+            response=response,
+            error=error,
+            _pool=_pool,
+            _stacktrace=_stacktrace,
+        )
 
 
 def handle_api_request(
@@ -74,7 +142,7 @@ def handle_api_request(
         requests.Response: The HTTP response object.
     """
     session = requests.Session()
-    retry_strategy = Retry(
+    retry_strategy = LoggingRetry(
         total=3,
         status_forcelist=[429, 500, 502, 503, 504],
         backoff_factor=1,
