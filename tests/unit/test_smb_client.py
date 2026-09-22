@@ -10,6 +10,7 @@ import pytest
 
 from viadot.exceptions import (
     CredentialError,
+    SMBConnectionError,
 )
 from viadot.sources.smb_client import (
     SMBClient,
@@ -18,6 +19,7 @@ from viadot.sources.smb_client import (
     _add_prefix_to_filename,
     _build_prefix_from_path,
     _check_filename_for_problematic_chars,
+    _ensure_smb_session,
     _get_unique_local_path,
 )
 
@@ -114,6 +116,39 @@ def test_smb_client_initialization_without_credentials():
         match="`username`, and `password` credentials are required.",
     ):
         SMBClient(server=SERVER, share=SHARE)
+
+
+# ==================== _ensure_smb_session tests ====================
+
+
+def test_ensure_smb_session_uses_ntlm():
+    """NTLM must be set on both ClientConfig and register_session."""
+    with (
+        patch("viadot.sources.smb_client.smbclient.ClientConfig") as mock_config,
+        patch("viadot.sources.smb_client.smbclient.register_session") as mock_register,
+    ):
+        _ensure_smb_session(SERVER, USERNAME, PASSWORD)
+
+    mock_config.assert_called_once_with(
+        username=USERNAME,
+        password=PASSWORD,
+        auth_protocol="ntlm",
+    )
+    mock_register.assert_called_once_with(
+        SERVER,
+        username=USERNAME,
+        password=PASSWORD,
+        auth_protocol="ntlm",
+    )
+
+
+def test_ensure_smb_session_requires_credentials():
+    """Missing server/username/password should raise SMBConnectionError."""
+    with pytest.raises(
+        SMBConnectionError,
+        match="SMB server/username/password must be provided",
+    ):
+        _ensure_smb_session("", USERNAME, PASSWORD)
 
 
 # ==================== SMBClient.list_directory tests ====================
