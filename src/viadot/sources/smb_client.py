@@ -61,7 +61,20 @@ def _ensure_smb_session(server: str, username: str, password: str) -> None:
         raise SMBConnectionError(msg)
 
     try:
-        smbclient.register_session(server, username=username, password=password)
+        # Default `negotiate` prefers Kerberos and ignores username/password in
+        # favour of a ticket cache. NTLM + ClientConfig is required so explicit
+        # credentials are used, including on DFS referrals to other hosts.
+        smbclient.ClientConfig(
+            username=username,
+            password=password,
+            auth_protocol="ntlm",
+        )
+        smbclient.register_session(
+            server,
+            username=username,
+            password=password,
+            auth_protocol="ntlm",
+        )
     except smbprotocol.exceptions.LogonFailure as e:
         msg = "Authentication failed: invalid SMB credentials."
         raise SMBConnectionError(msg) from e
