@@ -75,7 +75,7 @@ class PostgreSQL(SQL):
         Returns:
             str: The ODBC connection string.
         """
-        driver = self.credentials["driver"]
+        driver = self.credentials.get("driver") or ""
         server = self.server
         port = self.port
         db_name = self.db_name
