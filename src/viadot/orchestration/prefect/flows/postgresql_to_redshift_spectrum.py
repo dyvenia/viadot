@@ -33,7 +33,7 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
     port: int = 5432,
     db_name: str = "postgres",
     sslmode: str = "require",
-    driver: str = "PostgreSQL Unicode",
+    driver: str | None = "PostgreSQL Unicode",
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
