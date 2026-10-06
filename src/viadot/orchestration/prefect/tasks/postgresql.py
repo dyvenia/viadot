@@ -90,6 +90,7 @@ def postgresql_to_df(
     port: int = 5432,
     db_name: str = "postgres",
     sslmode: str = "require",
+    driver: str = "PostgreSQL Unicode",
     config_key: str | None = None,
     tests: dict[str, Any] | None = None,
 ) -> pd.DataFrame:
@@ -134,6 +135,7 @@ def postgresql_to_df(
         port=port,
         db_name=db_name,
         sslmode=sslmode,
+        driver=driver,
     )
 
     df = postgresql.to_df(query=query, tests=tests)

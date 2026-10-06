@@ -82,19 +82,23 @@ class PostgreSQL(SQL):
         uid = self.credentials.get("username") or ""
         pwd = self.credentials.get("password") or ""
 
-        conn_str = (
-            f"DRIVER={{{driver}}};"
-            f"SERVER={server};"
-            f"PORT={port};"
-            f"DATABASE={db_name};"
-            f"UID={uid};"
-            f"PWD={pwd};"
+        parts = []
+        if driver:
+            parts.append(f"DRIVER={{{driver}}}")
+
+        parts.extend(
+            [
+                f"SERVER={server}",
+                f"PORT={port}",
+                f"DATABASE={db_name}",
+                f"UID={uid}",
+                f"PWD={pwd}",
+                # Optional SSL mode if provided, e.g. 'require', 'verify-ca', 'disable'
+                f"SSLmode={self.sslmode};",
+            ]
         )
 
-        # Optional SSL mode if provided, e.g. 'require', 'verify-ca', 'disable'
-        conn_str += f"SSLmode={self.sslmode};"
-
-        return conn_str
+        return ";".join(parts) + ";"
 
     def _check_if_table_exists(self, table: str, schema: str | None = None) -> bool:
         """Check if a table exists in the given schema (PostgreSQL).

@@ -33,6 +33,7 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
     port: int = 5432,
     db_name: str = "postgres",
     sslmode: str = "require",
+    driver: str = "PostgreSQL Unicode",
     extension: str = ".parquet",
     if_exists: Literal["overwrite", "append"] = "overwrite",
     partition_cols: list[str] | None = None,
@@ -98,7 +99,7 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
             storing the credentials. Defaults to None.
         postgresql_config_key (str | None, optional): Key in the configuration for
             PostgreSQL credentials. Defaults to None.
-
+    aurorqa - 17.4
     Note:
         State tracking and downstream node triggering parameters are injected by the
         ``with_state_tracking_and_downstream_triggering`` decorator. See its docstring
@@ -120,6 +121,7 @@ def postgresql_to_redshift_spectrum(  # noqa: PLR0913
         port=port,
         db_name=db_name,
         sslmode=sslmode,
+        driver=driver,
         tests=tests,
     )
 
