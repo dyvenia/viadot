@@ -25,7 +25,6 @@ dependencies = [
     "prefect-sqlalchemy>=0.4.3",
     "duckdb>1.0.0, <2",
     "requests>=2.32.3",
-    "prefect-github>=0.2.7",
     "o365>=2.0.36",
     "numpy>=2.0.0",
     "defusedxml>=0.7.1",
@@ -45,6 +44,7 @@ dependencies = [
     "pandas>=2.0.0",
     "pendulum>=2.1.2",
     "croniter>=3.0.0",
+    "fastapi<0.116",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
