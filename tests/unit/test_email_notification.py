@@ -1,9 +1,15 @@
 from pandas import DataFrame
+from prefect import flow
+from prefect.runtime import flow_run
+from prefect.settings import get_current_settings
+from prefect.testing.utilities import prefect_test_harness
 from pydantic import ValidationError
 import pytest
+import requests
 
 from viadot.orchestration.prefect.tasks.failed_test_email_notification import (
     SmtpConfig,
+    build_flow_run_url,
     find_column,
     find_model,
     find_schema,
@@ -86,3 +92,42 @@ def test_smtp_config_custom_values():
 def test_smtp_config_missing_password():
     with pytest.raises(ValidationError):
         SmtpConfig(sender="test@gmail.com")  # type: ignore
+
+
+def test_build_flow_run_url():
+    assert (
+        build_flow_run_url(
+            "12345678-1234-1234-1234-123456789012",
+            "https://prefect.example.com/",
+        )
+        == "https://prefect.example.com/runs/flow-run/"
+        "12345678-1234-1234-1234-123456789012"
+    )
+
+
+def test_build_flow_run_url_without_flow_run():
+    assert build_flow_run_url(prefect_ui_url="https://prefect.example.com") is None
+
+
+def test_build_flow_run_url_from_ephemeral_prefect_server():
+    @flow
+    def test_flow():
+        settings = get_current_settings()
+        return (
+            build_flow_run_url(),
+            settings.ui_url,
+            settings.api.url,
+            flow_run.id,
+        )
+
+    with prefect_test_harness():
+        url, ui_url, api_url, flow_run_id = test_flow()
+        response = requests.get(
+            f"{api_url}/flow_runs/{flow_run_id}",
+            timeout=10,
+        )
+
+    assert url is not None
+    assert url.startswith(f"{ui_url}/runs/flow-run/")
+    assert response.status_code == 200
+    assert response.json()["id"] == str(flow_run_id)
