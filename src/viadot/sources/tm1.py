@@ -20,12 +20,14 @@ class TM1Credentials(BaseModel):
         - password: The password to use for the connection.
         - address: The ip address to use for the connection.
         - port: The port to use for the connection.
+        - namespace: The port to use for the connection.
     """
 
     username: str
     password: SecretStr
     address: str
     port: str
+    namespace: str
 
 
 class TM1(Source):
@@ -87,6 +89,7 @@ class TM1(Source):
         return TM1Service(
             address=self.credentials.get("address"),
             port=self.credentials.get("port"),
+            namespace=self.credentials.get("namespace"),
             user=self.credentials.get("username"),
             password=self.credentials.get("password").get_secret_value(),
             ssl=self.verify,
