@@ -25,7 +25,6 @@ dependencies = [
     "prefect-sqlalchemy>=0.4.3",
     "duckdb>1.0.0, <2",
     "requests>=2.32.3",
-    "prefect-github>=0.2.7",
     "o365>=2.0.36",
     "numpy>=2.0.0",
     "defusedxml>=0.7.1",
@@ -85,6 +84,7 @@ dev = [
     "pytest-asyncio>=0.23.8",
     "moto>=5.0.13",
     "pytest-mock>=3.14.0",
+    "fastapi<0.116", # Required by Prefect 3.5's local test server compatibility.
 ]
 docs = [
     "zensical>=0.0.53",

@@ -2,8 +2,10 @@
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import html
 import json
 from logging import Logger, LoggerAdapter
+import os
 from pathlib import Path
 import re
 import smtplib
@@ -11,6 +13,8 @@ import smtplib
 import pandas as pd
 from prefect import task
 from prefect.logging import get_run_logger
+from prefect.runtime import flow_run
+from prefect.settings import get_current_settings
 from pydantic import BaseModel
 
 
@@ -102,6 +106,38 @@ def find_test(value: str | None, test_types: tuple[str, ...]) -> str | None:
         if test_type in value:
             return test_type
     return None
+
+
+def build_flow_run_url(
+    flow_run_id: str | None = None,
+    prefect_ui_url: str | None = None,
+) -> str | None:
+    """Build a link to a Prefect flow run in the current Prefect UI.
+
+    Args:
+        flow_run_id (str | None): The ID of the flow run. If None, the current flow run
+            ID is used.
+        prefect_ui_url (str | None): The URL of the Prefect UI. If None, the configured
+            Prefect UI URL is used.
+
+    Returns:
+        str | None: The URL to the flow run in the Prefect UI, or None if it cannot be
+            determined.
+    """
+    flow_run_id = flow_run_id or flow_run.id
+    if not flow_run_id:
+        return None
+
+    base_url = (
+        prefect_ui_url or os.getenv("PREFECT_UI_URL") or get_current_settings().ui_url
+    )
+    if not base_url:
+        return None
+
+    return (
+        f"{base_url.rstrip('/')}/runs/flow-run/"
+        f"{html.escape(str(flow_run_id), quote=True)}"
+    )
 
 
 def extract_model_ownership(manifest_file_path: str) -> pd.DataFrame:
@@ -360,6 +396,9 @@ def dbt_test_failure_notifier(
         return
     owners_df = extract_model_ownership(manifest_file_path)
     failed_tests = enrich_with_owners(failed_tests, owners_df)
+    url = build_flow_run_url()
+    for failed_test in failed_tests:
+        failed_test["flow_run"] = f'<a href="{url}">Open flow run</a>'
 
     df_failed_tests = pd.DataFrame(failed_tests)
     dfs_list = [group for _, group in df_failed_tests.groupby("model")]
