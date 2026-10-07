@@ -44,7 +44,6 @@ dependencies = [
     "pandas>=2.0.0",
     "pendulum>=2.1.2",
     "croniter>=3.0.0",
-    "fastapi<0.116",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -85,6 +84,7 @@ dev = [
     "pytest-asyncio>=0.23.8",
     "moto>=5.0.13",
     "pytest-mock>=3.14.0",
+    "fastapi<0.116", # Required by Prefect 3.5's local test server compatibility.
 ]
 docs = [
     "zensical>=0.0.53",
