@@ -17,7 +17,7 @@ from pathlib import Path
 import re
 import threading
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 import zipfile
 
 import boto3
@@ -84,6 +84,34 @@ def _ensure_smb_session(server: str, username: str, password: str) -> None:
     except Exception as e:
         msg = f"SMB connection failed: {e}"
         raise SMBConnectionError(msg) from e
+
+
+def _set_s3_extra_args(
+    source_path: str, *, set_smb_path_in_metadata: bool = False
+) -> dict[str, Any] | None:
+    """Build S3 ``ExtraArgs`` that store the SMB source path as object metadata.
+
+    Returns ``None`` unless ``set_smb_path_in_metadata`` is enabled. S3 user
+    metadata must be US-ASCII, so the path is percent-encoded. Slashes and
+    colons stay readable; backslashes in the UNC path are encoded.
+
+    Args:
+        source_path (str): SMB source path, typically a UNC path. For a file
+            extracted from a ZIP this includes the inner member name.
+        set_smb_path_in_metadata (bool): When True, include ``smb-source-path``
+            in the object metadata. Defaults to False.
+
+    Returns:
+        dict[str, Any] | None: ``ExtraArgs`` for ``upload_fileobj``, or
+        ``None`` when metadata is disabled.
+    """
+    if not set_smb_path_in_metadata:
+        return None
+    return {
+        "Metadata": {
+            "smb-source-path": quote(source_path, safe="/:"),
+        }
+    }
 
 
 def _to_unc_path(server: str, share: str, relative_path: str | None) -> str:
@@ -843,7 +871,7 @@ def download_file_from_smb(  # noqa: C901, PLR0915
     return paths
 
 
-def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
+def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0913, PLR0915
     server: str,
     share: str,
     remote_path: str,
@@ -854,11 +882,14 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     prefix_levels_to_add: int = 0,
     organize_by_year: bool = False,
     zip_inner_file_regexes: str | list[str] | None = None,
+    set_smb_path_in_metadata: bool = False,
 ) -> list[str]:
     """Stream a file directly from SMB server to S3 bucket without saving to disk.
 
     Uses `smbclient.open_file` to read the remote file and `boto3`'s
     `upload_fileobj` to stream the bytes to S3 without writing to local disk.
+    When ``set_smb_path_in_metadata`` is True, each uploaded object stores the SMB
+    source path in user metadata under ``smb-source-path``.
 
     Args:
         server (str): SMB server address.
@@ -882,6 +913,8 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
             or list of regex patterns used to filter files *inside* ZIP archives.
             If provided and the file is a ZIP, only matching inner files will be
             extracted and streamed to S3. Defaults to None.
+        set_smb_path_in_metadata (bool): When True, store the SMB source path in
+            S3 object metadata under ``smb-source-path``. Defaults to False.
 
     Returns:
         list[str]: A list of S3 paths where files were uploaded. For regular files,
@@ -1008,7 +1041,13 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
                         try:
                             with zf.open(zip_member_name) as member_file:
                                 s3_client.upload_fileobj(
-                                    member_file, s3_bucket, zip_s3_key
+                                    member_file,
+                                    s3_bucket,
+                                    zip_s3_key,
+                                    ExtraArgs=_set_s3_extra_args(
+                                        f"{unc_remote_path}!{zip_member_name}",
+                                        set_smb_path_in_metadata=set_smb_path_in_metadata,
+                                    ),
                                 )
                             s3_paths.append(zip_s3_full_path)
                             logger.info(
@@ -1053,7 +1092,14 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     try:
         with smbclient.open_file(unc_remote_path, mode="rb") as remote_file:
             # upload_fileobj streams in chunks; does not read entire file into memory
-            s3_client.upload_fileobj(remote_file, s3_bucket, s3_key)
+            s3_client.upload_fileobj(
+                remote_file,
+                s3_bucket,
+                s3_key,
+                ExtraArgs=_set_s3_extra_args(
+                    unc_remote_path, set_smb_path_in_metadata=set_smb_path_in_metadata
+                ),
+            )
     except ClientError as e:
         error_code = (
             e.response.get("Error", {}).get("Code") if hasattr(e, "response") else None
@@ -1079,7 +1125,7 @@ def _stream_file_from_smb_to_s3(  # noqa: C901, PLR0912, PLR0915
     return [s3_full_path]
 
 
-def stream_smb_files_to_s3(
+def stream_smb_files_to_s3(  # noqa: PLR0913
     smb_file_paths: list[str],
     smb_server: str,
     smb_share: str,
@@ -1090,6 +1136,7 @@ def stream_smb_files_to_s3(
     prefix_levels_to_add: int = 0,
     organize_by_year: bool = False,
     zip_inner_file_regexes: str | list[str] | None = None,
+    set_smb_path_in_metadata: bool = False,
 ) -> list[str]:
     """Stream multiple files directly from SMB server to S3 bucket.
 
@@ -1124,6 +1171,8 @@ def stream_smb_files_to_s3(
             or list of regex patterns used to filter files *inside* ZIP archives.
             If provided and a file is a ZIP, only matching inner files will be
             extracted and streamed to S3. Defaults to None.
+        set_smb_path_in_metadata (bool): When True, store the SMB source path in
+            S3 object metadata under ``smb-source-path``. Defaults to False.
 
     Returns:
         list[str]: List of S3 paths where files were successfully uploaded.
@@ -1150,6 +1199,7 @@ def stream_smb_files_to_s3(
                 prefix_levels_to_add=prefix_levels_to_add,
                 organize_by_year=organize_by_year,
                 zip_inner_file_regexes=zip_inner_file_regexes,
+                set_smb_path_in_metadata=set_smb_path_in_metadata,
             )
             s3_paths.extend(s3_path_result)
         except SMBInvalidFilenameError:
@@ -1685,6 +1735,7 @@ class SMBClient(Source):
         prefix_levels_to_add: int = 0,
         organize_by_year: bool = False,
         zip_inner_file_regexes: str | list[str] | None = None,
+        set_smb_path_in_metadata: bool = False,
     ) -> list[str]:
         """Stream multiple files from SMB directly to S3.
 
@@ -1716,6 +1767,9 @@ class SMBClient(Source):
                 string or list of regex patterns used to filter files *inside* ZIP
                 archives. If provided and a file is a ZIP, only matching inner
                 files will be extracted and streamed to S3. Defaults to None.
+            set_smb_path_in_metadata (bool): When True, store the SMB source path
+                in S3 object metadata under ``smb-source-path``. Defaults to
+                False.
 
         Returns:
             list[str]: List of S3 paths where files were successfully uploaded.
@@ -1733,4 +1787,5 @@ class SMBClient(Source):
             prefix_levels_to_add=prefix_levels_to_add,
             organize_by_year=organize_by_year,
             zip_inner_file_regexes=zip_inner_file_regexes,
+            set_smb_path_in_metadata=set_smb_path_in_metadata,
         )
