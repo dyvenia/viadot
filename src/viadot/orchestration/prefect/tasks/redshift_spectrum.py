@@ -8,7 +8,6 @@ from prefect import task
 from prefect.logging import get_run_logger
 
 from viadot.config import get_source_credentials
-from viadot.orchestration.prefect.exceptions import MissingSourceCredentialsError
 from viadot.orchestration.prefect.utils import get_credentials
 
 
@@ -68,9 +67,6 @@ def df_to_redshift_spectrum(  # noqa: PLR0913
             and `credentials_secret`. Defaults to None.
         kwargs: The parameters to pass in awswrangler to_parquet/to_csv function.
     """
-    if not (credentials or config_key or credentials_secret):
-        raise MissingSourceCredentialsError
-
     credentials = (
         credentials
         or get_source_credentials(config_key)

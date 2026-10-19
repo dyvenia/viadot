@@ -176,7 +176,7 @@ def _notify_and_mark_breaches(
 @flow(name="SLA Monitor")
 def sla_monitor(
     state_path: str,
-    state_store_credentials_secret: str,
+    state_store_credentials_secret: str | None = None,
     state_store_type: str = "s3",
     smtp_credentials_secret: str | None = None,
     owner_type: Literal["technical owner", "business owner", "all"] = "technical owner",
@@ -194,7 +194,8 @@ def sla_monitor(
     Args:
         state_path (str): Path to the state store.
         state_store_credentials_secret: The name of the Prefect Secret containing
-            credentials to access the state store.
+            credentials to access the state store. When omitted, the default AWS
+            credential chain is used (for example, IRSA). Defaults to None.
         state_store_type: Backend type for the state store. Defaults to "s3".
         smtp_credentials_secret: The name of the Prefect Secret containing SMTP
             credentials for sending notifications. Not used in dry-run mode. Defaults
@@ -219,7 +220,11 @@ def sla_monitor(
     store = StateStore(
         store_type=state_store_type,
         state_path=state_path,
-        credentials=get_credentials(state_store_credentials_secret),
+        credentials=(
+            get_credentials(state_store_credentials_secret)
+            if state_store_credentials_secret
+            else None
+        ),
     )
     state, _ = store._read()
 

@@ -8,7 +8,7 @@ from prefect import task
 from prefect.logging import get_run_logger
 
 
-@task
+@task(retries=2, retry_delay_seconds=60, timeout_seconds=60 * 10)
 def perspective_ingest_task(
     perspective_api_url: str | None = None,
     perspective_api_token: str | None = None,

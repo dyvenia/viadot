@@ -10,6 +10,7 @@ import pytest
 
 from viadot.exceptions import (
     CredentialError,
+    SMBConnectionError,
 )
 from viadot.sources.smb_client import (
     SMBClient,
@@ -18,6 +19,7 @@ from viadot.sources.smb_client import (
     _add_prefix_to_filename,
     _build_prefix_from_path,
     _check_filename_for_problematic_chars,
+    _ensure_smb_session,
     _get_unique_local_path,
 )
 
@@ -114,6 +116,39 @@ def test_smb_client_initialization_without_credentials():
         match="`username`, and `password` credentials are required.",
     ):
         SMBClient(server=SERVER, share=SHARE)
+
+
+# ==================== _ensure_smb_session tests ====================
+
+
+def test_ensure_smb_session_uses_ntlm():
+    """NTLM must be set on both ClientConfig and register_session."""
+    with (
+        patch("viadot.sources.smb_client.smbclient.ClientConfig") as mock_config,
+        patch("viadot.sources.smb_client.smbclient.register_session") as mock_register,
+    ):
+        _ensure_smb_session(SERVER, USERNAME, PASSWORD)
+
+    mock_config.assert_called_once_with(
+        username=USERNAME,
+        password=PASSWORD,
+        auth_protocol="ntlm",
+    )
+    mock_register.assert_called_once_with(
+        SERVER,
+        username=USERNAME,
+        password=PASSWORD,
+        auth_protocol="ntlm",
+    )
+
+
+def test_ensure_smb_session_requires_credentials():
+    """Missing server/username/password should raise SMBConnectionError."""
+    with pytest.raises(
+        SMBConnectionError,
+        match="SMB server/username/password must be provided",
+    ):
+        _ensure_smb_session("", USERNAME, PASSWORD)
 
 
 # ==================== SMBClient.list_directory tests ====================
@@ -294,73 +329,21 @@ def test_stream_files_to_s3_success(smb_client_instance):
 
 
 def test_stream_files_to_s3_without_aws_credentials(smb_client_instance):
-    """Test streaming to S3 without AWS credentials raises CredentialError."""
+    """Test streaming to S3 without AWS credentials (optional; default None)."""
     smb_file_paths = ["file.txt"]
     s3_path = "s3://bucket/path/"
 
-    with pytest.raises(CredentialError, match="must be a dictionary"):
+    with patch(
+        "viadot.sources.smb_client.stream_smb_files_to_s3",
+        return_value=["s3://bucket/path/file.txt"],
+    ) as mock_stream:
         smb_client_instance.stream_files_to_s3(
             smb_file_paths=smb_file_paths,
             s3_path=s3_path,
-            aws_credentials=None,  # type: ignore
         )
 
-
-def test_stream_files_to_s3_with_empty_aws_credentials(smb_client_instance):
-    """Test streaming to S3 with empty aws_credentials raises CredentialError."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
-
-    with pytest.raises(
-        CredentialError, match="aws_access_key_id.*aws_secret_access_key"
-    ):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials={},
-        )
-
-
-def test_stream_files_to_s3_with_incomplete_aws_credentials(smb_client_instance):
-    """Test streaming to S3 with incomplete aws_credentials raises CredentialError."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
-
-    # Missing aws_secret_access_key
-    with pytest.raises(
-        CredentialError, match="aws_access_key_id.*aws_secret_access_key"
-    ):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials={"aws_access_key_id": "test_key"},
-        )
-
-    # Missing aws_access_key_id
-    with pytest.raises(
-        CredentialError, match="aws_access_key_id.*aws_secret_access_key"
-    ):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials={
-                "aws_secret_access_key": "test_secret"  # pragma: allowlist secret
-            },
-        )
-
-
-def test_stream_files_to_s3_with_invalid_aws_credentials_type(smb_client_instance):
-    """Test streaming to S3 with invalid aws_credentials type raises CredentialError."""
-    smb_file_paths = ["file.txt"]
-    s3_path = "s3://bucket/path/"
-
-    # Invalid type (string instead of dict)
-    with pytest.raises(CredentialError, match="must be a dictionary"):
-        smb_client_instance.stream_files_to_s3(
-            smb_file_paths=smb_file_paths,
-            s3_path=s3_path,
-            aws_credentials="invalid",  # type: ignore
-        )
+        call_kwargs = mock_stream.call_args.kwargs
+        assert call_kwargs["aws_credentials"] is None
 
 
 def test_stream_files_to_s3_with_aws_credentials(smb_client_instance):

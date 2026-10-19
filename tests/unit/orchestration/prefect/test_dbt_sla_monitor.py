@@ -93,6 +93,33 @@ class TestNotifyAndMarkBreaches:
 
 
 class TestSlaMonitor:
+    def test_uses_ambient_aws_credentials_when_secret_is_omitted(self, monkeypatch):
+        fake_store = MagicMock()
+        fake_store._read.return_value = ({}, None)
+        state_store = MagicMock(return_value=fake_store)
+        get_credentials = MagicMock()
+        monkeypatch.setattr(
+            "viadot.orchestration.prefect.flows.dbt_sla_monitor.StateStore",
+            state_store,
+        )
+        monkeypatch.setattr(
+            "viadot.orchestration.prefect.flows.dbt_sla_monitor.get_credentials",
+            get_credentials,
+        )
+        monkeypatch.setattr(
+            "viadot.orchestration.prefect.flows.dbt_sla_monitor.get_run_logger",
+            MagicMock(return_value=MagicMock()),
+        )
+
+        sla_monitor.fn(state_path="s3://bucket/state.json")
+
+        state_store.assert_called_once_with(
+            store_type="s3",
+            state_path="s3://bucket/state.json",
+            credentials=None,
+        )
+        get_credentials.assert_not_called()
+
     def test_groups_breaches_per_owner_before_notifying(self, monkeypatch):
         state = {
             "model_a": {
