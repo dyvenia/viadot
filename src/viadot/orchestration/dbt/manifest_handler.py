@@ -2,6 +2,7 @@
 
 import logging
 
+from viadot.exceptions import MissingStateEntryError
 from viadot.orchestration.dbt.state_handler import is_fresh
 
 
@@ -40,6 +41,19 @@ class ManifestHandler:
         if not node:
             return {}
         return node.get("meta") or {}
+
+    def requires_state_entry(self, node_name: str) -> bool:
+        """Return whether a node has freshness configuration in the manifest.
+
+        A configured model is expected to have a state entry once it is used as
+        an upstream dependency. A missing state entry for the downstream target
+        itself is intentionally not checked here because that is a valid first
+        execution.
+        """
+        sla = self.get_node_meta(node_name).get("SLA")
+        if sla is None:
+            return False
+        return not (isinstance(sla, str) and sla.strip().lower() in ("ignored", "n/a"))
 
     def get_upstreams(self, node_name: str) -> list[str]:
         """Return the short names of all direct upstream dependencies of a model node.
@@ -125,11 +139,23 @@ class ManifestHandler:
         runnable: list[str] = []
         stale: dict[str, list[str]] = {}
         for node in downstream_nodes:
-            stale_upstreams = [
-                u
-                for u in self.get_upstreams(node)
-                if u != node_name and not is_fresh(u, state)
-            ]
+            stale_upstreams = []
+            for upstream in self.get_upstreams(node):
+                # The node that triggered this evaluation has just completed.
+                if upstream == node_name:
+                    continue
+                # The upstream has no entries in the state table.
+                if upstream not in state:
+                    # But it has SAO configuration, so it should have a state entry.
+                    # This has minimal performance impact as it's only executed in
+                    # case of an upstream missing from the state table, which should be
+                    # rare.
+                    if self.requires_state_entry(upstream):
+                        raise MissingStateEntryError(upstream, node)
+                    continue
+                # Existing state entries gate execution according to their freshness.
+                if not is_fresh(upstream, state):
+                    stale_upstreams.append(upstream)
             if stale_upstreams:
                 stale[node] = stale_upstreams
             else:

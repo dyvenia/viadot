@@ -17,6 +17,22 @@ class DBDataAccessError(Exception):
     pass
 
 
+class SAOStateError(Exception):
+    """Base exception for invalid SAO state."""
+
+
+class MissingStateEntryError(SAOStateError):
+    """Raised when a configured upstream has no state-table entry."""
+
+    def __init__(self, upstream: str, downstream: str) -> None:
+        """Build an error for a missing upstream state entry."""
+        message = (
+            f"Configured upstream '{upstream}' has no state-table entry while "
+            f"evaluating downstream '{downstream}'."
+        )
+        super().__init__(message)
+
+
 class DataRangeError(Exception):
     pass
 
