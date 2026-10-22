@@ -8,6 +8,7 @@ from .azure_sql import AzureSQL
 from .bigquery import BigQuery
 from .business_core import BusinessCore
 from .cloud_for_customers import CloudForCustomers
+from .cornerstone import Cornerstone
 from .customer_gauge import CustomerGauge
 from .ecb import ECBExchangeRates
 from .entraid import EntraID
@@ -48,6 +49,7 @@ __all__ = [
     "BigQuery",
     "BusinessCore",
     "CloudForCustomers",
+    "Cornerstone",
     "CustomerGauge",
     "DuckDB",
     "ECBExchangeRates",
