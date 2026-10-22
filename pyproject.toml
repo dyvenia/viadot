@@ -176,6 +176,7 @@ ignore = [
     "ANN001",
     "D103",
     "D100",
+    "D107",  # missing docstring in __init__ method
     "N802",
     "N803",
     "B905",

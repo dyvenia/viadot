@@ -231,7 +231,7 @@ def test_sharepoint():
 Integration tests connect to the actual systems. For these tests, you will need to set up your viadot config with proper credentials. For example, to test a `Sharepoint` source, our config could look like this:
 
 ```yaml
-# ~/.config/viadot/config.yaml
+# ~/.config/viadot/viadot.yaml
 version: 1
 
 sources:
@@ -279,13 +279,20 @@ except ImportError:
 
 ## Using viadot config
 
-In order to avoid storing and passing credentials through variables, source configuration should be stored in the viadot config file (by default, `~/.config/viadot/config.yaml`).
+In order to avoid storing and passing credentials through variables, source configuration should be stored in `viadot.yaml`. viadot searches the current directory and its parents for the nearest `viadot.yaml`. If no project config is found, viadot falls back to `~/.config/viadot/viadot.yaml`.
+
+The repository includes [viadot.yaml.example](../../viadot.yaml.example), which can be copied to the project directory as `viadot.yaml` and filled in.
 
 You can find each source's configuration in [the documentation](../references/sources/sql_sources.md).
 
 Below is an example config file, with configurations for two sources:
 
 ```yaml
+version: 1
+
+settings:
+  max_batch_size: 20000
+
 sources:
   - exchange_rates:
       class: ExchangeRates

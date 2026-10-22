@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -13,6 +12,7 @@ from yaml import safe_load
 logger = logging.getLogger(__name__)
 
 USER_HOME = Path.home()
+MAX_BATCH_SIZE = 20_000
 
 
 class Config(dict):
@@ -32,21 +32,6 @@ class Config(dict):
         return cls(**config)
 
     @classmethod
-    def from_json(cls, path: str | Path, key: str | None = None) -> Config:
-        """Create a Config object from a JSON file.
-
-        Args:
-            path (str): The path to the JSON file.
-            key (str | None, optional): The key inside the JSON. Defaults to None.
-
-        Returns:
-            Config: The Config object.
-        """
-        with Path(path).open() as f:
-            config = json.load(f)
-            return cls._get_configuration(config, key=key)
-
-    @classmethod
     def from_yaml(cls, path: str | Path, key: str | None = None) -> Config:
         """Create a Config object from a YAML file.
 
@@ -62,19 +47,56 @@ class Config(dict):
             return cls._get_configuration(config, key=key)
 
 
-config_dir = Path(USER_HOME) / ".config" / "viadot"
+def _load_config(directory: Path) -> Config | None:
+    """Load ``viadot.yaml`` from a directory if it exists."""
+    path = directory / "viadot.yaml"
+    if path.exists():
+        try:
+            return Config.from_yaml(path)
+        except (TypeError, ValueError):
+            logger.warning(f"Could not read viadot config file from '{path}'.")
+            return Config()
+    return None
 
-try:
-    CONFIG = Config.from_yaml(config_dir / "config.yaml")
-except FileNotFoundError:
-    try:
-        CONFIG = Config.from_json(config_dir / "config.json")
-    except FileNotFoundError:
-        CONFIG = Config()
-except ValueError:
-    # Incorrect config structure.
-    logger.warning(f"Could not read default viadot config file from '{config_dir}'.")
-    CONFIG = Config()
+
+def _find_project_config(start: Path | None = None) -> Config | None:
+    """Find project configuration in the current or any parent directory.
+
+    The closest configuration file wins, which makes nested projects predictable.
+    """
+    directory = (start or Path.cwd()).resolve()
+    for candidate in (directory, *directory.parents):
+        config = _load_config(candidate)
+        if config is not None:
+            return config
+    return None
+
+
+def _load_default_config() -> Config:
+    """Load project config first, then fall back to the user's config."""
+    project_config = _find_project_config()
+    if project_config is not None:
+        return project_config
+
+    home_config = _load_config(Path(USER_HOME) / ".config" / "viadot")
+    return home_config if home_config is not None else Config()
+
+
+CONFIG = _load_default_config()
+
+
+def get_max_batch_size(config: Config = CONFIG) -> int:
+    """Return the configured maximum records per output batch."""
+    settings = config.get("settings", {})
+    value = (
+        settings.get("max_batch_size", MAX_BATCH_SIZE)
+        if isinstance(settings, dict)
+        else MAX_BATCH_SIZE
+    )
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        logger.warning(f"Invalid 'settings.max_batch_size'; using {MAX_BATCH_SIZE}.")
+        return MAX_BATCH_SIZE
+    return value
 
 
 def get_source_config(key: str, config: Config = CONFIG) -> dict[str, Any] | None:

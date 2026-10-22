@@ -13,6 +13,7 @@ nav:
       - Introduction: developer_guide/index.md
       - Creating a source: developer_guide/creating_a_source.md
       - Creating a Prefect flow: developer_guide/creating_a_prefect_flow.md
+      - Advanced connector authoring: developer_guide/advanced_connector_authoring.md
       - Contributing: developer_guide/contributing_to_viadot.md
 
   - Advanced Usage:

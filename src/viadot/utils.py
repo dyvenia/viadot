@@ -1,6 +1,6 @@
 """Util functions."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 import contextlib
 from datetime import datetime, timedelta, timezone
 import functools
@@ -556,28 +556,42 @@ def add_viadot_metadata_columns(func: Callable) -> Callable:
 
 
 def add_viadot_metadata_columns_arrow(func: Callable) -> Callable:
-    """A decorator for Arrow-returning methods (e.g., `to_arrow`).
+    """Add viadot metadata to Arrow tables or lazy record-batch iterators.
 
-    Adds viadot metadata columns to the returned pyarrow.Table without pandas.
+    The decorated function may return either a ``pa.Table`` or an iterable of
+    ``pa.RecordBatch`` objects. Iterators remain lazy and receive the metadata
+    when each batch is consumed.
     """
 
     @functools.wraps(func)
-    def wrapper(*args, **kwargs) -> pa.Table:
-        table = func(*args, **kwargs)
-
-        # Accessing instance
+    def wrapper(*args, **kwargs) -> pa.Table | Iterator[pa.RecordBatch]:
+        result = func(*args, **kwargs)
         instance = args[0]
         _viadot_source = instance.__class__.__name__
-
-        length = table.num_rows
         ts_value = datetime.now(timezone.utc).replace(microsecond=0)
-        source_arr = pa.array([_viadot_source] * length)
-        ts_arr = pa.array([ts_value] * length, type=pa.timestamp("s", tz="UTC"))
 
-        # Add both columns in a single reconstruction to minimize copies
-        new_columns = [*table.columns, source_arr, ts_arr]
-        new_names = [*table.column_names, "_viadot_source", "_viadot_downloaded_at_utc"]
-        return pa.table(new_columns, names=new_names)
+        def add_metadata(table: pa.Table | pa.RecordBatch) -> pa.Table | pa.RecordBatch:
+            length = table.num_rows
+            source_arr = pa.array([_viadot_source] * length)
+            ts_arr = pa.array([ts_value] * length, type=pa.timestamp("s", tz="UTC"))
+
+            if isinstance(table, pa.RecordBatch):
+                return table.append_column("_viadot_source", source_arr).append_column(
+                    "_viadot_downloaded_at_utc", ts_arr
+                )
+
+            new_columns = [*table.columns, source_arr, ts_arr]
+            new_names = [
+                *table.column_names,
+                "_viadot_source",
+                "_viadot_downloaded_at_utc",
+            ]
+            return pa.table(new_columns, names=new_names)
+
+        if isinstance(result, pa.Table):
+            return add_metadata(result)
+
+        return (add_metadata(record_batch) for record_batch in result)
 
     return wrapper
 

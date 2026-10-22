@@ -1,0 +1,11 @@
+version: 1
+
+# Maximum number of records in a batch produced by any connector.
+settings:
+  max_batch_size: 20000
+
+sources:
+  - example_source:
+      class: ExampleSource
+      credentials:
+        api_key: "<API_KEY>"

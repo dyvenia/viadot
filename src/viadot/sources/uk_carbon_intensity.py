@@ -1,88 +1,65 @@
 """UK Carbon Intensity connector."""
 
-import pandas as pd
+from collections.abc import Iterator
+from typing import Any
+
 import requests
 
 from viadot.sources.base import Source
-from viadot.utils import add_viadot_metadata_columns
 
 
 class UKCarbonIntensity(Source):
-    def __init__(self, *args, api_url: str | None = None, **kwargs):
-        """Fetch data of Carbon Intensity of the UK Power Grid.
+    """Fetch data of Carbon Intensity of the UK Power Grid.
 
-        Documentation for this source API is located
-        at: https://carbon-intensity.github.io/api-definitions/#carbon-intensity-api-v2-0-0
+    Documentation for this source API is located at:
+    https://carbon-intensity.github.io/api-definitions/#carbon-intensity-api-v2-0-0
+    """
 
-        Parameters
-        ----------
-        api_url : str, optional
-        The URL endpoint to call, by default None
-        """
-        super().__init__(*args, **kwargs)
-        self.api_url = api_url
-        self.API_ENDPOINT = "https://api.carbonintensity.org.uk"
+    API_ENDPOINT = "https://api.carbonintensity.org.uk"
 
-    def to_json(self) -> dict:
-        """Creates json file."""
-        url = f"{self.API_ENDPOINT}{self.api_url}"
+    def _get(self, api_url: str) -> dict:
+        """Fetch the raw response from the Carbon Intensity API."""
+        url = f"{self.API_ENDPOINT}{api_url}"
         headers = {"Accept": "application/json"}
-        response = requests.get(url, params={}, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.ok:
             return response.json()
-        raise f"Error {response.json()}"
+        msg = f"Error {response.json()}"
+        raise ValueError(msg)
 
-    @add_viadot_metadata_columns
-    def to_df(self, if_empty: str = "warn") -> pd.DataFrame:
-        """Returns a pandas DataFrame with flattened data.
+    def _to_records(
+        self,
+        batch_size: int | None = None,  # noqa: ARG002
+        api_url: str = "/intensity",
+    ) -> Iterator[list[dict[str, Any]]]:
+        """Fetch and flatten carbon-intensity measurements into records.
 
-        Returns:
-            pandas.DataFrame: A Pandas DataFrame
+        The base ``Source`` class handles batching, empty responses, and conversion
+        to Arrow or pandas. This connector only needs to normalize the API response.
         """
-        from_ = []
-        to = []
-        forecast = []
-        actual = []
-        max_ = []
-        average = []
-        min_ = []
-        index = []
-        json_data = self.to_json()
+        json_data = self._get(api_url=api_url)
+        records = []
 
-        if not json_data:
-            self._handle_if_empty(if_empty)
-
-        for row in json_data["data"]:
-            from_.append(row["from"])
-            to.append(row["to"])
-            index.append(row["intensity"]["index"])
-            try:
-                forecast.append(row["intensity"]["forecast"])
-                actual.append(row["intensity"]["actual"])
-                df = pd.DataFrame(
-                    {
-                        "from": from_,
-                        "to": to,
-                        "forecast": forecast,
-                        "actual": actual,
-                        "index": index,
-                    }
+        for row in (json_data or {}).get("data", []):
+            intensity = row["intensity"]
+            record = {
+                "from": row["from"],
+                "to": row["to"],
+                "index": intensity["index"],
+            }
+            # /intensity endpoint handling.
+            if "forecast" in intensity and "actual" in intensity:
+                record.update(
+                    forecast=intensity["forecast"],
+                    actual=intensity["actual"],
                 )
-            except KeyError:
-                max_.append(row["intensity"]["max"])
-                average.append(row["intensity"]["average"])
-                min_.append(row["intensity"]["min"])
-                df = pd.DataFrame(
-                    {
-                        "from": from_,
-                        "to": to,
-                        "max": max_,
-                        "average": average,
-                        "min": min_,
-                    }
+            # Historical endpoints handling (/intensity/date/...).
+            else:
+                record.update(
+                    max=intensity["max"],
+                    average=intensity["average"],
+                    min=intensity["min"],
                 )
-        return df
+            records.append(record)
 
-    def query(self) -> None:
-        """Queries the API."""
-        ...
+        yield records

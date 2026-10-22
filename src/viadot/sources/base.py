@@ -1,25 +1,47 @@
 """Base classes for data sources."""
 
 from abc import abstractmethod
+from collections.abc import Iterable, Iterator
+import inspect
+from itertools import batched, chain
 import logging
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 import pandas as pd
 import pyarrow as pa
 import pyodbc
 
-from viadot.config import get_source_credentials
+from viadot.config import get_max_batch_size, get_source_credentials
 from viadot.signals import SKIP
-from viadot.utils import add_viadot_metadata_columns, validate
+from viadot.utils import (
+    add_viadot_metadata_columns,
+    add_viadot_metadata_columns_arrow,
+    validate,
+)
 
 
 logger = logging.getLogger(__name__)
 
 Record = tuple[Any]
+RecordBatch = Iterable[Any]
+
+
+class _DefaultBatchSize:
+    """Marker for an omitted public batch-size argument."""
+
+
+_DEFAULT_BATCH_SIZE = _DefaultBatchSize()
 
 
 class Source:
+    # Connectors that can natively return data in the requested batch size within
+    # `_to_records()` should override this with True. The default keeps the generic
+    # re-batching fallback for sources where batch size cannot be controlled, so that
+    # `to_records()` can still yield batches of the requested size (even if
+    # `_to_records()` cannot).
+    supports_batch_size = False
+
     def __init__(self, *args, credentials: dict[str, Any] | None = None, **kwargs):  # noqa: ARG002
         """Base class for data sources.
 
@@ -35,36 +57,192 @@ class Source:
     def to_json(self) -> dict:
         """Download data from source to a dictionary."""
 
-    @abstractmethod
-    def to_df(self, if_empty: Literal["warn", "skip", "fail"] = "warn") -> pd.DataFrame:
-        """Download data from source to a pandas DataFrame.
+    @overload
+    def to_df(
+        self,
+        batch_size: None,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pd.DataFrame: ...
+
+    @overload
+    def to_df(
+        self,
+        batch_size: int,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> Iterator[pd.DataFrame]: ...
+
+    def to_df(
+        self,
+        batch_size: int | _DefaultBatchSize | None = _DEFAULT_BATCH_SIZE,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pd.DataFrame | Iterator[pd.DataFrame]:
+        """Convert the result of ``to_arrow()`` to pandas.
 
         Args:
-            if_empty (Literal[warn, skip, fail], optional): What to do if there is no
-                data. Defaults to "warn".
+            batch_size (int | None, optional): Maximum number of records per
+                output batch. If None, return one DataFrame containing all records.
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if
+                there is no data. Defaults to "warn".
 
         Returns:
-            pd.DataFrame: The data from the source as a pandas DataFrame.
+            pd.DataFrame | Iterator[pd.DataFrame]: A DataFrame or a lazy iterator
+                of DataFrames, depending on ``batch_size``.
         """
+        result = self.to_arrow(batch_size=batch_size, if_empty=if_empty)
+        if isinstance(result, pa.Table):
+            return result.to_pandas()
+
+        return (
+            pa.Table.from_batches([record_batch]).to_pandas() for record_batch in result
+        )
 
     @abstractmethod
     def query(self) -> list[Record] | bool:
         """Run a query and possibly return the results."""
-        pass
 
-    def to_arrow(self, if_empty: Literal["warn", "skip", "fail"] = "warn") -> pa.Table:
-        """Creates a pyarrow table from source.
+    @overload
+    def to_arrow(
+        self,
+        batch_size: None,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pa.Table: ...
+
+    @overload
+    def to_arrow(
+        self,
+        batch_size: _DefaultBatchSize = _DEFAULT_BATCH_SIZE,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> Iterator[pa.RecordBatch]: ...
+
+    @overload
+    def to_arrow(
+        self,
+        batch_size: int,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> Iterator[pa.RecordBatch]: ...
+
+    @add_viadot_metadata_columns_arrow
+    def to_arrow(
+        self,
+        batch_size: int | _DefaultBatchSize | None = _DEFAULT_BATCH_SIZE,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> pa.Table | Iterator[pa.RecordBatch]:
+        """Create an Arrow table or lazily yield Arrow record batches.
 
         Args:
-            if_empty (Literal["warn", "skip", "fail"], optional): : What to do if data
+            batch_size (int | None, optional): Maximum number of records per
+                output batch. If None, return one table containing all records.
+            if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
                 source contains no data. Defaults to "warn".
         """
-        try:
-            df = self.to_df(if_empty=if_empty)
-        except SKIP:
-            return False
+        records = self.to_records(batch_size=batch_size)
+        if not isinstance(records, Iterator):
+            table = pa.Table.from_pylist(records)
+            if table.num_rows == 0:
+                self._handle_if_empty(if_empty=if_empty)
+            return table
 
-        return pa.Table.from_pandas(df)
+        # We need to wrap the yield in order to be able to return arrow.Table directly
+        # above (otherwise, the return would just call StopIteration due to how
+        # generators work).
+        def record_batches() -> Iterator[pa.RecordBatch]:
+            has_records = False
+            for record_batch in records:
+                has_records = True
+                yield pa.RecordBatch.from_pylist(list(record_batch))
+
+            if not has_records:
+                self._handle_if_empty(if_empty=if_empty)
+
+        return record_batches()
+
+    @overload
+    def to_records(self, batch_size: None) -> RecordBatch: ...
+
+    @overload
+    def to_records(
+        self, batch_size: int | _DefaultBatchSize = _DEFAULT_BATCH_SIZE
+    ) -> Iterator[RecordBatch]: ...
+
+    def to_records(
+        self,
+        batch_size: int | _DefaultBatchSize | None = _DEFAULT_BATCH_SIZE,
+    ) -> RecordBatch | Iterator[RecordBatch]:
+        """Return source records, lazily batched unless batching is disabled.
+
+        Concrete sources provide the source-specific ``_to_records()`` method,
+        which yields source-native batches. This method owns the generic output
+        batching and logging behavior shared by all sources.
+
+        Args:
+            batch_size (int | None, optional): Maximum number of records per
+                output batch. If None, expose all records as one logical batch.
+
+        Returns:
+            RecordBatch | Iterator[RecordBatch]: All records as one materialized
+                batch when ``batch_size`` is None, otherwise a lazy iterator of
+                batches containing at most ``batch_size`` records.
+        """
+        batch_size = self._resolve_batch_size(batch_size)
+        source_batches = self._to_records(batch_size=batch_size) or ()
+
+        if batch_size is None:
+            self.logger.info("Processing batch 1...")
+            records = list(chain.from_iterable(source_batches))
+            self.logger.info("All batches processed successfully.")
+            return records
+
+        def record_batches() -> Iterator[RecordBatch]:
+            if self.supports_batch_size:
+                # The connector natively supports precise batch sizes - no need to
+                # re-batch.
+                for batch_number, source_batch in enumerate(source_batches, start=1):
+                    self.logger.info(f"Processing batch {batch_number}...")
+                    yield source_batch
+            else:
+                # Enforce `batch_size` by re-batching source-native batches. This
+                # allows the connector to control batch size via parameters instead
+                # of hardcoding it in the source implementation, but will incur
+                # additional processing and memory copies.
+                for batch_number, batch in enumerate(
+                    batched(chain.from_iterable(source_batches), n=batch_size),
+                    start=1,
+                ):
+                    self.logger.info(f"Processing batch {batch_number}...")
+                    yield batch
+
+            self.logger.info("All batches processed successfully.")
+
+        return record_batches()
+
+    def _resolve_batch_size(
+        self, batch_size: int | _DefaultBatchSize | None
+    ) -> int | None:
+        """Resolve omitted batch size according to connector capabilities."""
+        project_batch_size = get_max_batch_size()
+        if batch_size is _DEFAULT_BATCH_SIZE:
+            parameter = inspect.signature(self._to_records).parameters.get("batch_size")
+            connector_batch_size = (
+                parameter.default
+                if parameter
+                and type(parameter.default) is int
+                and parameter.default > 0
+                else None
+            )
+            batch_size = connector_batch_size or project_batch_size
+        elif not isinstance(batch_size, int):
+            return None
+
+        return min(batch_size, project_batch_size)
+
+    @abstractmethod
+    def _to_records(self, batch_size: int | None = None) -> Iterator[RecordBatch]:
+        """Fetch and yield source-native batches of records.
+
+        Implementations should use ``batch_size`` when the underlying source
+        supports configurable fetch sizes and set ``supports_batch_size = True``
+        on the connector so the base class can avoid re-batching.
+        """
 
     def to_csv(
         self,
@@ -96,7 +274,8 @@ class Source:
             bool: Whether the operation was successful.
         """
         try:
-            df = self.to_df(if_empty=if_empty, **kwargs)
+            kwargs.pop("batch_size", None)
+            df = self.to_df(batch_size=None, if_empty=if_empty, **kwargs)
         except SKIP:
             return False
 
@@ -129,7 +308,7 @@ class Source:
 
         """
         try:
-            df = self.to_df(if_empty=if_empty)
+            df = self.to_df(batch_size=None, if_empty=if_empty)
         except SKIP:
             return False
 
@@ -141,7 +320,10 @@ class Source:
                 out_df = df
         elif if_exists == "replace":
             out_df = df
-        out_df.to_excel(path, index=False, encoding="utf8")
+        else:
+            msg = "'if_exists' must be one of ['append', 'replace']"
+            raise ValueError(msg)
+        out_df.to_excel(path, index=False)
         return True
 
     def _handle_if_empty(
