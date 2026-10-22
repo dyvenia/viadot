@@ -19,9 +19,12 @@ class ManifestHandler:
         manifest: The parsed dbt manifest dictionary.
     """
 
-    def __init__(self, manifest: dict) -> None:
-        """Initialize ManifestHandler with the given manifest dict."""
+    def __init__(
+        self, manifest: dict, state_tracked_nodes: set[str] | None = None
+    ) -> None:
+        """Initialize the handler with a manifest and SAO-enabled node names."""
         self.manifest = manifest
+        self.state_tracked_nodes = state_tracked_nodes or set()
 
     def get_node_meta(self, node_name: str) -> dict:
         """Return the ``meta`` block for a dbt node (model or source).
@@ -41,19 +44,6 @@ class ManifestHandler:
         if not node:
             return {}
         return node.get("meta") or {}
-
-    def requires_state_entry(self, node_name: str) -> bool:
-        """Return whether a node has freshness configuration in the manifest.
-
-        A configured model is expected to have a state entry once it is used as
-        an upstream dependency. A missing state entry for the downstream target
-        itself is intentionally not checked here because that is a valid first
-        execution.
-        """
-        sla = self.get_node_meta(node_name).get("SLA")
-        if sla is None:
-            return False
-        return not (isinstance(sla, str) and sla.strip().lower() in ("ignored", "n/a"))
 
     def get_upstreams(self, node_name: str) -> list[str]:
         """Return the short names of all direct upstream dependencies of a model node.
@@ -146,11 +136,11 @@ class ManifestHandler:
                     continue
                 # The upstream has no entries in the state table.
                 if upstream not in state:
-                    # But it has SAO configuration, so it should have a state entry.
+                    # But it has state tracking enabled, so it should have an entry.
                     # This has minimal performance impact as it's only executed in
                     # case of an upstream missing from the state table, which should be
                     # rare.
-                    if self.requires_state_entry(upstream):
+                    if upstream in self.state_tracked_nodes:
                         raise MissingStateEntryError(upstream, node)
                     continue
                 # Existing state entries gate execution according to their freshness.
