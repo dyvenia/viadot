@@ -251,7 +251,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
             (default: 30).
         trigger_downstream_nodes (bool): Whether to trigger downstream nodes
             (default: False).
-        trigger_downstream_nodes_delay (int): Delay in seconds before triggering
+        trigger_downstream_nodes_delay (int): Delay in minutes before triggering
             (default: 0).
         trigger_downstream_nodes_tags (list[str] | None): Optional tags to apply to
             triggered downstream deployments (default: None).
