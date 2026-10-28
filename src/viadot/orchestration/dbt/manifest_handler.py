@@ -1,5 +1,6 @@
 """Manifest traversal logic for dbt dynamic orchestration."""
 
+from collections.abc import Callable
 import logging
 
 from viadot.exceptions import MissingStateEntryError
@@ -20,11 +21,30 @@ class ManifestHandler:
     """
 
     def __init__(
-        self, manifest: dict, state_tracked_nodes: set[str] | None = None
+        self,
+        manifest: dict,
+        state_tracked_nodes: set[str] | Callable[[], set[str]] | None = None,
     ) -> None:
-        """Initialize the handler with a manifest and SAO-enabled node names."""
+        """Initialize with a manifest and tracked nodes or a lazy node loader."""
         self.manifest = manifest
-        self.state_tracked_nodes = state_tracked_nodes or set()
+        self._state_tracked_nodes = (
+            state_tracked_nodes if isinstance(state_tracked_nodes, set) else None
+        )
+        self._state_tracked_nodes_loader = (
+            state_tracked_nodes if callable(state_tracked_nodes) else None
+        )
+
+    @property
+    def state_tracked_nodes(self) -> set[str]:
+        """Return tracked nodes, loading deployment configuration only when needed."""
+        if self._state_tracked_nodes is None:
+            self._state_tracked_nodes = (
+                self._state_tracked_nodes_loader()
+                if self._state_tracked_nodes_loader is not None
+                else set()
+            )
+            self._state_tracked_nodes_loader = None
+        return self._state_tracked_nodes
 
     def get_node_meta(self, node_name: str) -> dict:
         """Return the ``meta`` block for a dbt node (model or source).

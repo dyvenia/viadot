@@ -206,6 +206,28 @@ class TestGetDirectDownstreamNodes:
 
 
 class TestGetRunnableNodes:
+    def test_defers_state_tracked_node_lookup_until_upstream_state_is_missing(
+        self, manifest
+    ):
+        load_tracked_nodes = MagicMock(return_value={"raw_products"})
+        handler = ManifestHandler(manifest, state_tracked_nodes=load_tracked_nodes)
+        state = {"raw_products": {"fresh_until": "2099-01-01T00:00:00+00:00"}}
+
+        runnable, stale = handler.get_runnable_nodes("raw_orders", state)
+
+        assert set(runnable) == {"int_orders", "int_order_items"}
+        assert stale == {}
+        load_tracked_nodes.assert_not_called()
+
+    def test_loads_state_tracked_nodes_for_missing_upstream(self, manifest):
+        load_tracked_nodes = MagicMock(return_value={"int_customers"})
+        handler = ManifestHandler(manifest, state_tracked_nodes=load_tracked_nodes)
+
+        with pytest.raises(MissingStateEntryError):
+            handler.get_runnable_nodes("int_orders", state={})
+
+        load_tracked_nodes.assert_called_once_with()
+
     def test_configured_downstream_without_state_entry_is_runnable(self, manifest):
         runnable, stale = ManifestHandler(
             manifest, state_tracked_nodes={"int_orders"}
@@ -1002,8 +1024,12 @@ class TestTriggerDownstreamNodes:
         self, monkeypatch, manifest
     ):
         mock_run = MagicMock()
+        load_tracked_nodes = MagicMock(return_value=set())
         mock_store_instance = MagicMock()
         mock_store_instance._read.return_value = ({}, "etag1")
+        monkeypatch.setattr(
+            f"{_MODULE}.get_state_tracked_nodes_prefect_yaml", load_tracked_nodes
+        )
         monkeypatch.setattr(
             f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
         )
@@ -1029,6 +1055,7 @@ class TestTriggerDownstreamNodes:
             ]
         )
         assert mock_run.call_count == 2
+        load_tracked_nodes.assert_not_called()
 
     def test_does_not_trigger_when_no_runnable_nodes(self, monkeypatch, manifest):
         mock_run = MagicMock()

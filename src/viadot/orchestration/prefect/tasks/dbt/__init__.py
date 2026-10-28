@@ -192,8 +192,12 @@ def trigger_downstream_nodes(
     )
     state, _ = store._read()
 
-    state_tracked_nodes = get_state_tracked_nodes_prefect_yaml(deployments_dir)
-    handler = ManifestHandler(manifest, state_tracked_nodes=state_tracked_nodes)
+    handler = ManifestHandler(
+        manifest,
+        state_tracked_nodes=lambda: get_state_tracked_nodes_prefect_yaml(
+            deployments_dir
+        ),
+    )
     nodes_to_run, stale_nodes = handler.get_runnable_nodes(node_name, state)
 
     if stale_nodes:
