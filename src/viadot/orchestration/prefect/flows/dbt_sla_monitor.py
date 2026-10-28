@@ -104,17 +104,20 @@ def notify_sla_breaches(
         for node_name, fresh_until in breaches
     )
     message = (
-        f"<p>The following {len(breaches)} model(s) have breached their SLA:</p>\n"
+        "<p>This alert indicates that data for the following nodes in a chained "
+        "pipeline was not refreshed by its expected freshness deadline.</p>\n"
+        f"<p>The following {len(breaches)} node(s) are overdue for refresh:</p>\n"
         "<table cellpadding='0' cellspacing='0' border='0'>\n"
         "  <thead>\n"
         "    <tr>\n"
-        "      <th align='left' style='padding: 0 24px 6px 0;'>Model</th>\n"
+        "      <th align='left' style='padding: 0 24px 6px 0;'>Node</th>\n"
         "      <th align='left' style='padding: 0 0 6px 0;'>Fresh Until</th>\n"
         "    </tr>\n"
         "  </thead>\n"
         f"  <tbody>\n{breach_rows}\n  </tbody>\n"
         "</table>\n"
-        "<p>Please investigate and take necessary action.</p>"
+        "<p>Please review the affected pipeline configurations and runs, and "
+        "investigate the delayed refresh.</p>"
     )
     get_run_logger().warning(
         f"Notifying {recipient} of SLA breaches: {[b[0] for b in breaches]}."
@@ -122,7 +125,7 @@ def notify_sla_breaches(
     smtp_credentials = get_credentials(smtp_credentials_secret)
     smtp_config = SmtpConfig(**smtp_credentials)
     send_email_notification(
-        subject=f"SLA Breach: {len(breaches)} model(s) require attention",
+        subject=f"dbt Model SLA Breach: {len(breaches)} model(s) require attention",
         body=message,
         recipients=[recipient],
         smtp_config=smtp_config,
