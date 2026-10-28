@@ -1,7 +1,9 @@
 """Manifest traversal logic for dbt dynamic orchestration."""
 
+from collections.abc import Callable
 import logging
 
+from viadot.exceptions import MissingStateEntryError
 from viadot.orchestration.dbt.state_handler import is_fresh
 
 
@@ -18,9 +20,31 @@ class ManifestHandler:
         manifest: The parsed dbt manifest dictionary.
     """
 
-    def __init__(self, manifest: dict) -> None:
-        """Initialize ManifestHandler with the given manifest dict."""
+    def __init__(
+        self,
+        manifest: dict,
+        state_tracked_nodes: set[str] | Callable[[], set[str]] | None = None,
+    ) -> None:
+        """Initialize with a manifest and tracked nodes or a lazy node loader."""
         self.manifest = manifest
+        self._state_tracked_nodes = (
+            state_tracked_nodes if isinstance(state_tracked_nodes, set) else None
+        )
+        self._state_tracked_nodes_loader = (
+            state_tracked_nodes if callable(state_tracked_nodes) else None
+        )
+
+    @property
+    def state_tracked_nodes(self) -> set[str]:
+        """Return tracked nodes, loading deployment configuration only when needed."""
+        if self._state_tracked_nodes is None:
+            self._state_tracked_nodes = (
+                self._state_tracked_nodes_loader()
+                if self._state_tracked_nodes_loader is not None
+                else set()
+            )
+            self._state_tracked_nodes_loader = None
+        return self._state_tracked_nodes
 
     def get_node_meta(self, node_name: str) -> dict:
         """Return the ``meta`` block for a dbt node (model or source).
@@ -125,11 +149,23 @@ class ManifestHandler:
         runnable: list[str] = []
         stale: dict[str, list[str]] = {}
         for node in downstream_nodes:
-            stale_upstreams = [
-                u
-                for u in self.get_upstreams(node)
-                if u != node_name and not is_fresh(u, state)
-            ]
+            stale_upstreams = []
+            for upstream in self.get_upstreams(node):
+                # The node that triggered this evaluation has just completed.
+                if upstream == node_name:
+                    continue
+                # The upstream has no entries in the state table.
+                if upstream not in state:
+                    # But it has state tracking enabled, so it should have an entry.
+                    # This has minimal performance impact as it's only executed in
+                    # case of an upstream missing from the state table, which should be
+                    # rare.
+                    if upstream in self.state_tracked_nodes:
+                        raise MissingStateEntryError(upstream, node)
+                    continue
+                # Existing state entries gate execution according to their freshness.
+                if not is_fresh(upstream, state):
+                    stale_upstreams.append(upstream)
             if stale_upstreams:
                 stale[node] = stale_upstreams
             else:

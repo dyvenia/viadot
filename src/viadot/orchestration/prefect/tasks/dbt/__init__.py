@@ -13,7 +13,10 @@ from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
 from viadot.orchestration.dbt.state_handler import StateHandler
 from viadot.orchestration.dbt.state_store import StateStore
-from viadot.orchestration.prefect.tasks.dbt.utils import get_node_schedules_prefect_yaml
+from viadot.orchestration.prefect.tasks.dbt.utils import (
+    get_node_schedules_prefect_yaml,
+    get_state_tracked_nodes_prefect_yaml,
+)
 from viadot.orchestration.prefect.utils import shell_run_command
 
 
@@ -161,6 +164,7 @@ def trigger_downstream_nodes(
     manifest: dict,
     state_path: str,
     state_store_credentials: dict[str, Any],
+    deployments_dir: str | Path | None = None,
     flow_name: str = "Transform and Catalog",
     tags: list[str] | None = None,
     on_missing_downstream_deployment: Literal["warn", "raise"] = "raise",
@@ -173,6 +177,7 @@ def trigger_downstream_nodes(
         manifest: The dbt manifest dictionary.
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
         state_store_credentials: AWS credentials for the state store.
+        deployments_dir: Directory containing Prefect deployment YAML files.
         flow_name: The name of the Prefect flow that owns the downstream deployments.
         tags: Optional list of tags to apply to triggered deployments.
         on_missing_downstream_deployment: Behavior when a downstream Prefect
@@ -187,7 +192,12 @@ def trigger_downstream_nodes(
     )
     state, _ = store._read()
 
-    handler = ManifestHandler(manifest)
+    handler = ManifestHandler(
+        manifest,
+        state_tracked_nodes=lambda: get_state_tracked_nodes_prefect_yaml(
+            deployments_dir
+        ),
+    )
     nodes_to_run, stale_nodes = handler.get_runnable_nodes(node_name, state)
 
     if stale_nodes:
