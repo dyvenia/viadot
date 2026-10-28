@@ -97,5 +97,7 @@ def get_state_tracked_nodes_prefect_yaml(
                 if isinstance((node_name := parameters.get(key)), str)
             )
 
-    logger.info(f"Found state-tracked nodes in Prefect deployments: {tracked_nodes}")
+    logger.info(
+        f"Found {len(tracked_nodes)} state-tracked nodes in Prefect deployments."
+    )
     return tracked_nodes
