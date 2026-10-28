@@ -398,6 +398,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                         state_store_credentials=state_update_params[
                             "state_store_credentials"
                         ],
+                        deployments_dir=options["deployments_dir"],
                         tags=options["trigger_downstream_nodes_tags"],
                         on_missing_downstream_deployment=cast(
                             Literal["warn", "raise"],
@@ -419,6 +420,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                     state_store_credentials=state_update_params[
                         "state_store_credentials"
                     ],
+                    deployments_dir=options["deployments_dir"],
                     tags=options["trigger_downstream_nodes_tags"],
                     on_missing_downstream_deployment=cast(
                         Literal["warn", "raise"],
