@@ -351,14 +351,27 @@ class S3(Source):
             msg = "The content of the file is not a valid JSON."
             raise ValueError(msg) from e
 
-    def upload(self, from_path: str, to_path: str) -> None:
+    def upload(
+        self,
+        from_path: str,
+        to_path: str,
+        s3_additional_kwargs: dict[str, Any] | None = None,
+    ) -> None:
         """Upload file(s) to S3.
 
         Args:
             from_path (str): Path to local file(s) to be uploaded.
             to_path (str): Path to the destination file/folder.
+            s3_additional_kwargs (dict[str, Any] | None): Extra arguments
+                forwarded to the S3 ``put_object`` call, for example
+                ``{"Metadata": {"smb-source-path": "..."}}``. Defaults to None.
         """
-        wr.s3.upload(boto3_session=self.session, local_file=from_path, path=to_path)
+        wr.s3.upload(
+            boto3_session=self.session,
+            local_file=from_path,
+            path=to_path,
+            s3_additional_kwargs=s3_additional_kwargs,
+        )
 
     def download(self, from_path: str, to_path: str) -> None:
         """Download file(s) from Amazon S3.
