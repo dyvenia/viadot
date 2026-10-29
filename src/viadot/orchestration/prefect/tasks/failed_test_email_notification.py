@@ -396,7 +396,7 @@ def dbt_test_failure_notifier(
         return
     owners_df = extract_model_ownership(manifest_file_path)
     failed_tests = enrich_with_owners(failed_tests, owners_df)
-    if url:     # noqa: F821
+    if url:  # noqa: F821
         for failed_test in failed_tests:
             failed_test["flow_run"] = f'<a href="{url}">Open flow run</a>'  # noqa: F821
 
