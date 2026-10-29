@@ -394,11 +394,11 @@ def dbt_test_failure_notifier(
     if not failed_tests:
         logger.info("No failed tests — skipping notifications.")
         return
-    owners_df = extract_model_ownership(manifest_file_path) 
+    owners_df = extract_model_ownership(manifest_file_path)
     failed_tests = enrich_with_owners(failed_tests, owners_df)
-    if url:     # noqa: F821 
+    if url:     # noqa: F821
         for failed_test in failed_tests:
-            failed_test["flow_run"] = f'<a href="{url}">Open flow run</a>'  # noqa: F821 
+            failed_test["flow_run"] = f'<a href="{url}">Open flow run</a>'  # noqa: F821
 
     df_failed_tests = pd.DataFrame(failed_tests)
     dfs_list = [group for _, group in df_failed_tests.groupby("model")]
