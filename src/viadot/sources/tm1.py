@@ -20,7 +20,7 @@ class TM1Credentials(BaseModel):
         - password: The password to use for the connection.
         - address: The ip address to use for the connection.
         - port: The port to use for the connection.
-        - namespace: The port to use for the connection.
+        - namespace: The namespace to use for the connection.
     """
 
     username: str
