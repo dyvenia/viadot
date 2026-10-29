@@ -22,7 +22,7 @@ def tm1_credentials():
         password="test_password",  # pragma: allowlist secret # noqa: S106
         address="localhost",
         port="12356",
-        namespace="test_namespace"
+        namespace="test_namespace",
     )
 
 
