@@ -298,6 +298,32 @@ class TestGetRunnableNodes:
         assert runnable == ["mart_sales"]
         assert stale == {}
 
+    def test_evaluates_other_downstreams_after_missing_tracked_upstreams(
+        self, manifest
+    ):
+        manifest["nodes"]["model.lakehouse.int_orders_audit"] = {
+            "resource_type": "model",
+            "name": "int_orders_audit",
+            "depends_on": {
+                "nodes": [
+                    "source.lakehouse.staging.raw_orders",
+                    "source.lakehouse.staging.raw_customers",
+                ]
+            },
+        }
+        handler = ManifestHandler(
+            manifest, state_tracked_nodes={"raw_products", "raw_customers"}
+        )
+
+        with pytest.raises(MissingStateEntryError) as error:
+            handler.get_runnable_nodes("raw_orders", {})
+
+        assert error.value.missing_entries == {
+            "int_order_items": ["raw_products"],
+            "int_orders_audit": ["raw_customers"],
+        }
+        assert error.value.runnable_nodes == ["int_orders"]
+
 
 # ---------------------------------------------------------------------------
 # StateHandler
@@ -1112,6 +1138,35 @@ class TestTriggerDownstreamNodes:
 
         mock_run.assert_not_called()
 
+    def test_triggers_runnable_nodes_before_raising_missing_state_error(
+        self, monkeypatch, manifest
+    ):
+        mock_run = MagicMock()
+        mock_store_instance = MagicMock()
+        mock_store_instance._read.return_value = ({}, "etag1")
+        monkeypatch.setattr(
+            f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
+        )
+        monkeypatch.setattr(f"{_MODULE}.run_deployment", mock_run)
+        monkeypatch.setattr(
+            f"{_MODULE}.get_state_tracked_nodes_prefect_yaml",
+            lambda deployments_dir: {"raw_products"},
+        )
+
+        with pytest.raises(
+            MissingStateEntryError, match=r"int_order_items: raw_products"
+        ):
+            trigger_downstream_nodes.fn(
+                node_name="raw_orders",
+                manifest=manifest,
+                state_path="s3://bucket/node-state.json",
+                state_store_credentials={"token": "x"},
+            )
+
+        mock_run.assert_called_once_with(
+            name="Transform and Catalog/dbt_int_orders", timeout=0, tags=None
+        )
+
     def test_warns_and_continues_when_downstream_deployment_missing(
         self, monkeypatch, manifest
     ):
@@ -1156,7 +1211,10 @@ class TestTriggerDownstreamNodes:
     def test_raises_when_downstream_deployment_missing_in_raise_mode(
         self, monkeypatch, manifest
     ):
-        mock_run = MagicMock(side_effect=ObjectNotFound("missing"))
+        missing_deployment = ObjectNotFound(
+            RuntimeError("missing"), help_message="missing"
+        )
+        mock_run = MagicMock(side_effect=[missing_deployment, None])
         mock_store_instance = MagicMock()
         mock_store_instance._read.return_value = ({}, "etag1")
         monkeypatch.setattr(
@@ -1166,10 +1224,10 @@ class TestTriggerDownstreamNodes:
         monkeypatch.setattr(
             ManifestHandler,
             "get_runnable_nodes",
-            lambda self, n, s: (["int_orders"], {}),
+            lambda self, n, s: (["int_orders", "int_items"], {}),
         )
 
-        with pytest.raises(ObjectNotFound):
+        with pytest.raises(ObjectNotFound, match="dbt_int_orders"):
             trigger_downstream_nodes.fn(
                 node_name="raw_orders",
                 manifest=manifest,
@@ -1177,3 +1235,4 @@ class TestTriggerDownstreamNodes:
                 state_store_credentials={"token": "x"},
                 flow_name="transform-flow",
             )
+        assert mock_run.call_count == 2

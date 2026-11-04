@@ -22,14 +22,40 @@ class SAOStateError(Exception):
 
 
 class MissingStateEntryError(SAOStateError):
-    """Raised when a state-tracked upstream has no state-table entry."""
+    """Raised when tracked upstream states are missing during downstream evaluation."""
 
-    def __init__(self, upstream: str, downstream: str) -> None:
-        """Build an error for a missing upstream state entry."""
+    def __init__(
+        self,
+        upstream: str,
+        downstream: str,
+        *,
+        missing_entries: dict[str, list[str]] | None = None,
+        runnable_nodes: list[str] | None = None,
+        stale_nodes: dict[str, list[str]] | None = None,
+        missing_deployments: list[str] | None = None,
+    ) -> None:
+        """Build an error, optionally carrying all downstream evaluation results."""
+        self.upstream = upstream
+        self.downstream = downstream
+        self.missing_entries = missing_entries or {downstream: [upstream]}
+        self.runnable_nodes = runnable_nodes or []
+        self.stale_nodes = stale_nodes or {}
+        self.missing_deployments = missing_deployments or []
+
+        details = "; ".join(
+            f"{node}: {', '.join(upstreams)}"
+            for node, upstreams in self.missing_entries.items()
+        )
         message = (
             f"State-tracked upstream '{upstream}' has no state-table entry while "
-            f"evaluating downstream '{downstream}'."
+            f"evaluating downstream '{downstream}'. "
+            f"Missing state entries for tracked upstreams: {details}."
         )
+        if self.missing_deployments:
+            message += (
+                " Missing downstream deployments: "
+                f"{', '.join(self.missing_deployments)}."
+            )
         super().__init__(message)
 
 

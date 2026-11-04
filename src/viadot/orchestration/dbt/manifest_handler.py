@@ -125,6 +125,23 @@ class ManifestHandler:
         logger.info(f"Node '{node_name}' has direct downstream nodes: {downstreams}")
         return downstreams
 
+    def _get_upstream_status(
+        self, node_name: str, downstream_node: str, state: dict
+    ) -> tuple[list[str], list[str]]:
+        """Return stale and missing tracked upstreams for one downstream node."""
+        stale_upstreams: list[str] = []
+        missing_upstreams: list[str] = []
+        for upstream in self.get_upstreams(downstream_node):
+            if upstream == node_name:
+                continue
+            if upstream not in state:
+                if upstream in self.state_tracked_nodes:
+                    missing_upstreams.append(upstream)
+                continue
+            if not is_fresh(upstream, state):
+                stale_upstreams.append(upstream)
+        return stale_upstreams, missing_upstreams
+
     def get_runnable_nodes(
         self, node_name: str, state: dict
     ) -> tuple[list[str], dict[str, list[str]]]:
@@ -148,27 +165,25 @@ class ManifestHandler:
         downstream_nodes = self.get_direct_downstream_nodes(node_name)
         runnable: list[str] = []
         stale: dict[str, list[str]] = {}
+        missing_entries: dict[str, list[str]] = {}
         for node in downstream_nodes:
-            stale_upstreams = []
-            for upstream in self.get_upstreams(node):
-                # The node that triggered this evaluation has just completed.
-                if upstream == node_name:
-                    continue
-                # The upstream has no entries in the state table.
-                if upstream not in state:
-                    # But it has state tracking enabled, so it should have an entry.
-                    # This has minimal performance impact as it's only executed in
-                    # case of an upstream missing from the state table, which should be
-                    # rare.
-                    if upstream in self.state_tracked_nodes:
-                        raise MissingStateEntryError(upstream, node)
-                    continue
-                # Existing state entries gate execution according to their freshness.
-                if not is_fresh(upstream, state):
-                    stale_upstreams.append(upstream)
+            stale_upstreams, missing_upstreams = self._get_upstream_status(
+                node_name, node, state
+            )
             if stale_upstreams:
                 stale[node] = stale_upstreams
-            else:
+            if missing_upstreams:
+                missing_entries[node] = missing_upstreams
+            elif not stale_upstreams:
                 runnable.append(node)
         logger.info("Runnable downstream nodes selection finished.")
+        if missing_entries:
+            first_downstream, first_upstreams = next(iter(missing_entries.items()))
+            raise MissingStateEntryError(
+                first_upstreams[0],
+                first_downstream,
+                missing_entries=missing_entries,
+                runnable_nodes=runnable,
+                stale_nodes=stale,
+            )
         return runnable, stale
