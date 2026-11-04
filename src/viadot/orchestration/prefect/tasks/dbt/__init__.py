@@ -9,6 +9,7 @@ from prefect import get_run_logger, task
 from prefect.deployments import run_deployment
 from prefect.exceptions import ObjectNotFound
 
+from viadot.exceptions import MissingStateEntryError
 from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
 from viadot.orchestration.dbt.state_handler import StateHandler
@@ -198,7 +199,12 @@ def trigger_downstream_nodes(
             deployments_dir
         ),
     )
-    nodes_to_run, stale_nodes = handler.get_runnable_nodes(node_name, state)
+    missing_state_error: MissingStateEntryError | None = None
+    try:
+        nodes_to_run, stale_nodes = handler.get_runnable_nodes(node_name, state)
+    except MissingStateEntryError as error:
+        missing_state_error = error
+        nodes_to_run, stale_nodes = error.runnable_nodes, error.stale_nodes
 
     if stale_nodes:
         logger.warning(
@@ -210,6 +216,7 @@ def trigger_downstream_nodes(
         )
     if nodes_to_run:
         logger.info("Triggering downstream nodes ...")
+        missing_deployments: list[str] = []
         for node in nodes_to_run:
             # Use ``timeout=0`` so flow metadata is returned immediately.
             deployment_name = f"{flow_name}/dbt_{node}"
@@ -222,8 +229,24 @@ def trigger_downstream_nodes(
                         deployment_name,
                     )
                     continue
-                raise
+                missing_deployments.append(deployment_name)
+        if missing_state_error:
+            raise MissingStateEntryError(
+                missing_state_error.upstream,
+                missing_state_error.downstream,
+                missing_entries=missing_state_error.missing_entries,
+                runnable_nodes=nodes_to_run,
+                stale_nodes=stale_nodes,
+                missing_deployments=missing_deployments,
+            ) from missing_state_error
+        if missing_deployments:
+            message = (
+                f"Missing downstream deployments: {', '.join(missing_deployments)}."
+            )
+            raise ObjectNotFound(RuntimeError(message), help_message=message)
         return
+    if missing_state_error:
+        raise missing_state_error
     logger.info(
         "No nodes to trigger. All downstream nodes are either up to date or "
         "no downstream nodes exist."
