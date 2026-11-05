@@ -19,6 +19,7 @@ from .hubspot import Hubspot
 from .matomo import Matomo
 from .mediatool import Mediatool
 from .mindful import Mindful
+from .mysql import MySQL
 from .onestream import OneStream
 from .outlook import Outlook
 from .postgres import PostgreSQL
@@ -60,6 +61,7 @@ __all__ = [
     "Matomo",
     "Mediatool",
     "Mindful",
+    "MySQL",
     "OneStream",
     "Outlook",
     "PostgreSQL",

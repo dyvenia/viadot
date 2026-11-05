@@ -24,6 +24,7 @@ from .jira_issues_to_redshift_spectrum import jira_issues_to_redshift_spectrum
 from .matomo_to_redshift_spectrum import matomo_to_redshift_spectrum
 from .mediatool_to_adls import mediatool_to_adls
 from .mindful_to_adls import mindful_to_adls
+from .mysql_to_redshift_spectrum import mysql_to_redshift_spectrum
 from .onestream_data_adapters_to_redshift_spectrum import (
     onestream_data_adapters_to_redshift_spectrum,
 )
@@ -78,6 +79,7 @@ __all__ = [
     "matomo_to_redshift_spectrum",
     "mediatool_to_adls",
     "mindful_to_adls",
+    "mysql_to_redshift_spectrum",
     "onestream_data_adapters_to_redshift_spectrum",
     "onestream_sql_query_data_to_redshift_spectrum",
     "outlook_to_adls",
