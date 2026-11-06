@@ -146,7 +146,7 @@ def extract_model_ownership(manifest_file_path: str) -> pd.DataFrame:
         manifest = json.load(file)
 
     result = []
-    for _, node in manifest["nodes"].items():  # noqa: PERF102, RUF100
+    for node in manifest["nodes"].values():
         if node.get("resource_type") != "model":
             continue
 
@@ -396,9 +396,10 @@ def dbt_test_failure_notifier(
         return
     owners_df = extract_model_ownership(manifest_file_path)
     failed_tests = enrich_with_owners(failed_tests, owners_df)
-    if url:  # noqa: F821
+    url = build_flow_run_url()
+    if url:
         for failed_test in failed_tests:
-            failed_test["flow_run"] = f'<a href="{url}">Open flow run</a>'  # noqa: F821
+            failed_test["flow_run"] = f'<a href="{url}">Open flow run</a>'
 
     df_failed_tests = pd.DataFrame(failed_tests)
     dfs_list = [group for _, group in df_failed_tests.groupby("model")]
