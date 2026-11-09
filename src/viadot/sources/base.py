@@ -67,6 +67,13 @@ class Source:
     @overload
     def to_df(
         self,
+        batch_size: _DefaultBatchSize = _DEFAULT_BATCH_SIZE,
+        if_empty: Literal["warn", "skip", "fail"] = "warn",
+    ) -> Iterator[pd.DataFrame]: ...
+
+    @overload
+    def to_df(
+        self,
         batch_size: int,
         if_empty: Literal["warn", "skip", "fail"] = "warn",
     ) -> Iterator[pd.DataFrame]: ...
@@ -88,12 +95,17 @@ class Source:
             pd.DataFrame | Iterator[pd.DataFrame]: A DataFrame or a lazy iterator
                 of DataFrames, depending on ``batch_size``.
         """
-        result = self.to_arrow(batch_size=batch_size, if_empty=if_empty)
-        if isinstance(result, pa.Table):
-            return result.to_pandas()
+        batch_size = self._resolve_batch_size(batch_size)
+        if batch_size is None:
+            table = self.to_arrow(batch_size=None, if_empty=if_empty)
+            return table.to_pandas()
 
         return (
-            pa.Table.from_batches([record_batch]).to_pandas() for record_batch in result
+            pa.Table.from_batches([record_batch]).to_pandas()
+            for record_batch in self.to_arrow(
+                batch_size=batch_size,
+                if_empty=if_empty,
+            )
         )
 
     @abstractmethod
@@ -135,12 +147,15 @@ class Source:
             if_empty (Literal["warn", "skip", "fail"], optional): What to do if the
                 source contains no data. Defaults to "warn".
         """
-        records = self.to_records(batch_size=batch_size)
-        if not isinstance(records, Iterator):
+        batch_size = self._resolve_batch_size(batch_size)
+        if batch_size is None:
+            records = self.to_records(batch_size=None)
             table = pa.Table.from_pylist(records)
             if table.num_rows == 0:
                 self._handle_if_empty(if_empty=if_empty)
             return table
+
+        records = self.to_records(batch_size=batch_size)
 
         # We need to wrap the yield in order to be able to return arrow.Table directly
         # above (otherwise, the return would just call StopIteration due to how
@@ -168,7 +183,7 @@ class Source:
         self,
         batch_size: int | _DefaultBatchSize | None = _DEFAULT_BATCH_SIZE,
     ) -> RecordBatch | Iterator[RecordBatch]:
-        """Return source records, lazily batched unless batching is disabled.
+        """Return records immediately when batching is disabled, otherwise lazily.
 
         Concrete sources provide the source-specific ``_to_records()`` method,
         which yields source-native batches. This method owns the generic output
@@ -176,12 +191,11 @@ class Source:
 
         Args:
             batch_size (int | None, optional): Maximum number of records per
-                output batch. If None, expose all records as one logical batch.
+                output batch. If None, materialize all records in one iterable.
 
         Returns:
-            RecordBatch | Iterator[RecordBatch]: All records as one materialized
-                batch when ``batch_size`` is None, otherwise a lazy iterator of
-                batches containing at most ``batch_size`` records.
+            RecordBatch | Iterator[RecordBatch]: All records immediately when
+                ``batch_size`` is None, otherwise a lazy iterator of batches.
         """
         batch_size = self._resolve_batch_size(batch_size)
         source_batches = self._to_records(batch_size=batch_size) or ()
