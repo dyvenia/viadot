@@ -1,4 +1,4 @@
-"""Cornerstone RAPI, DEAPI, and Employees API source connector."""
+"""Cornerstone API source connector."""
 
 from collections.abc import Iterator
 import os
@@ -17,6 +17,7 @@ from viadot.sources.base import Record, Source
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 HTTP_TOO_MANY_REQUESTS = 429
 HTTP_ERROR_STATUS = 400
+API_TYPE = Literal["deapi"]
 
 
 class CornerstoneCredentials(BaseModel):
@@ -40,12 +41,13 @@ class CornerstoneCredentials(BaseModel):
 
 
 class Cornerstone(Source):
-    """Read paged records from Cornerstone reporting and employee endpoints.
+    """Connect to a Cornerstone API and retrieve a resource.
 
-    Use ``api="rapi"`` with a Reporting API view, ``api="deapi"`` with a
-    Data Exporter core object, or ``api="employees"`` with the Employees v2
-    endpoint. RAPI and DEAPI use OData parameters and opaque ``@odata.nextLink``
-    paging; Employees v2 uses ``nextPageToken``.
+    Select the API family with ``api``. Currently, ``"deapi"`` is supported:
+    pass a core-object name as ``resource`` to read its records, or use
+    ``resource="$metadata"`` with :meth:`get_metadata` to retrieve its OData
+    metadata XML. Object resources use the ``obj_<resource>:read`` scope;
+    metadata uses ``obj_metadata:read``.
 
     Credentials may be passed explicitly, loaded from a viadot ``config_key``, or
     temporarily read from the environment variables ``BASE_URL``, ``CLIENT_ID``,
@@ -53,21 +55,15 @@ class Cornerstone(Source):
     credentials grant is bound to its service account at application registration.
     """
 
-    API_PATHS: ClassVar[dict[Literal["rapi", "deapi", "employees"], str]] = {
-        "rapi": "/services/api/x/odata/api/views",
+    API_PATH: ClassVar[dict[API_TYPE, str]] = {
         "deapi": "/services/api/x/dataexporter/api/objects",
-        "employees": "/services/api/x/users/v2/employees",
     }
-    REQUESTS_PER_MINUTE: ClassVar[dict[Literal["rapi", "deapi", "employees"], int]] = {
-        "rapi": 400,
-        "deapi": 120,
-        "employees": 120,
-    }
+    REQUESTS_PER_MINUTE: ClassVar[dict[API_TYPE, int]] = {"deapi": 120}
 
     def __init__(
         self,
         resource: str,
-        api: Literal["rapi", "deapi", "employees"] = "deapi",
+        api: API_TYPE = "deapi",
         query_params: dict[str, Any] | None = None,
         credentials: CornerstoneCredentials | dict[str, Any] | None = None,
         config_key: str | None = None,
@@ -80,9 +76,8 @@ class Cornerstone(Source):
         """Initialize a Cornerstone API source.
 
         Args:
-            resource: RAPI view or DEAPI object name. Employees sources use the
-                default ``employees`` resource value, which is ignored in the URL.
-            api: API family, one of ``rapi``, ``deapi``, or ``employees``.
+            resource: Data Exporter core-object name, or ``"$metadata"``.
+            api: API family. Currently only ``"deapi"`` is supported.
             query_params: Optional OData or endpoint query parameters.
             credentials: Explicit Cornerstone credentials.
             config_key: viadot configuration key used when credentials are omitted.
@@ -90,11 +85,11 @@ class Cornerstone(Source):
             max_retries: Maximum retries for 429 and transient 5xx responses.
             backoff_factor: Base exponential retry delay in seconds.
         """
-        if api not in self.API_PATHS:
-            message = f"Unsupported Cornerstone API family: {api!r}"
+        if not resource:
+            message = "resource is required"
             raise ValueError(message)
-        if api != "employees" and not resource:
-            message = "resource is required for RAPI and DEAPI"
+        if api not in self.API_PATH:
+            message = f"Unsupported Cornerstone API family: {api!r}"
             raise ValueError(message)
         if max_retries < 0:
             message = "max_retries cannot be negative"
@@ -109,15 +104,15 @@ class Cornerstone(Source):
         credential_values = self._normalize_credential_keys(raw_credentials)
         validated_credentials = CornerstoneCredentials(**credential_values)
         if not validated_credentials.scope:
-            default_scope = {
-                "rapi": f"{resource}:read",
-                "deapi": f"obj_{resource}:read",
-                "employees": "employee:read",
-            }[api]
+            default_scope = (
+                "obj_metadata:read"
+                if resource == "$metadata"
+                else f"obj_{resource}:read"
+            )
             validated_credentials = validated_credentials.model_copy(
                 update={"scope": default_scope}
             )
-        self.api: Literal["rapi", "deapi", "employees"] = api
+        self.api: API_TYPE = api
         self.resource = resource
         self.query_params = dict(query_params or {})
         self.max_retries = max_retries
@@ -188,7 +183,9 @@ class Cornerstone(Source):
         """Return a cached access token or acquire one before it expires."""
         now = time.monotonic()
         if self._token and now < self._token_expires_at:
-            self.logger.debug("Reusing cached Cornerstone token api=%s", self.api)
+            self.logger.debug(
+                "Reusing cached Cornerstone token resource=%s", self.resource
+            )
             return self._token
 
         token_url = f"{self._credentials.base_url}/services/api/oauth2/token"
@@ -201,8 +198,7 @@ class Cornerstone(Source):
             payload["scope"] = self._credentials.scope
 
         self.logger.debug(
-            "Requesting Cornerstone OAuth token api=%s endpoint=%s scope=%s",
-            self.api,
+            "Requesting Cornerstone OAuth token endpoint=%s scope=%s",
             urlsplit(token_url).path,
             self._credentials.scope,
         )
@@ -234,8 +230,9 @@ class Cornerstone(Source):
         self._token = token
         self._token_expires_at = time.monotonic() + expires_in - refresh_buffer
         self.logger.info(
-            "Cornerstone OAuth token acquired api=%s expires_in_seconds=%s",
+            "Cornerstone OAuth token acquired api=%s resource=%s expires_in_seconds=%s",
             self.api,
+            self.resource,
             expires_in,
         )
         return token
@@ -282,13 +279,17 @@ class Cornerstone(Source):
 
     def _url(self) -> str:
         """Build the initial API URL for this source."""
-        base = f"{self._credentials.base_url}{self.API_PATHS[self.api]}"
-        if self.api == "employees":
-            return base
+        base = f"{self._credentials.base_url}{self.API_PATH[self.api]}"
         return f"{base}/{quote(self.resource, safe='$_-')}"
 
+    def _ensure_object_resource(self) -> None:
+        """Reject record operations when this source targets metadata."""
+        if self.resource == "$metadata":
+            message = "Use get_metadata() when resource is '$metadata'"
+            raise ValueError(message)
+
     def _wait_for_throttle(self) -> None:
-        """Pace requests from this source instance to the API-family limit."""
+        """Pace requests from this source instance to its API's rate limit."""
         interval = 60.0 / self.REQUESTS_PER_MINUTE[self.api]
         now = time.monotonic()
         if self._last_request_at is not None:
@@ -297,13 +298,13 @@ class Cornerstone(Source):
                 time.sleep(delay)
         self._last_request_at = time.monotonic()
 
-    def _request_json(
+    def _request_response(
         self,
         url: str,
         params: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
-    ) -> dict[str, Any]:
-        """GET JSON with bounded retries for throttling and transient server errors."""
+    ) -> requests.Response:
+        """GET a response with retries for throttling and transient server errors."""
         request_headers = self.headers
         if headers:
             request_headers.update(headers)
@@ -331,8 +332,7 @@ class Cornerstone(Source):
             )
             elapsed = time.monotonic() - started_at
             self.logger.debug(
-                "Cornerstone API response api=%s endpoint=%s status=%s "
-                "elapsed_seconds=%.3f",
+                "Cornerstone API response api=%s endpoint=%s status=%s elapsed_seconds=%.3f",
                 self.api,
                 endpoint,
                 response.status_code,
@@ -342,11 +342,7 @@ class Cornerstone(Source):
                 if response.status_code >= HTTP_ERROR_STATUS:
                     self._log_http_failure("API request", response)
                 response.raise_for_status()
-                body = response.json()
-                if not isinstance(body, dict):
-                    message = "Cornerstone API response must be a JSON object"
-                    raise ValueError(message)
-                return body
+                return response
 
             if attempt >= self.max_retries:
                 self._log_http_failure("API request", response)
@@ -376,19 +372,42 @@ class Cornerstone(Source):
         message = "Cornerstone request retry loop ended unexpectedly"
         raise RuntimeError(message)
 
+    def _request_json(
+        self,
+        url: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
+        """GET and validate a JSON-object response."""
+        response = self._request_response(url, params=params, headers=headers)
+        body = response.json()
+        if not isinstance(body, dict):
+            message = "Cornerstone API response must be a JSON object"
+            raise TypeError(message)
+        return body
+
+    def get_metadata(self) -> str:
+        """Return the selected API's ``$metadata`` OData XML document."""
+        if self.resource != "$metadata":
+            message = (
+                "Construct Cornerstone with resource='$metadata' to fetch metadata"
+            )
+            raise ValueError(message)
+        return self._request_response(
+            self._url(), headers={"Accept": "application/xml"}
+        ).text
+
     @staticmethod
     def _records_from_body(body: dict[str, Any]) -> list[dict[str, Any]]:
-        """Extract the record array used by OData and Employees responses."""
-        for key in ("value", "employees", "data", "records"):
-            records = body.get(key)
-            if isinstance(records, list):
-                return records
-        return []
+        """Extract records from an OData response."""
+        records = body.get("value")
+        return records if isinstance(records, list) else []
 
     def _iter_odata_records(
         self, batch_size: int | None
     ) -> Iterator[list[dict[str, Any]]]:
-        """Yield RAPI/DEAPI pages, following each opaque nextLink verbatim."""
+        """Yield OData pages, following each opaque nextLink verbatim."""
+        self._ensure_object_resource()
         url = self._url()
         params = dict(self.query_params)
         headers: dict[str, str] = {}
@@ -407,7 +426,7 @@ class Cornerstone(Source):
             records = self._records_from_body(body)
             next_url = body.get("@odata.nextLink") or body.get("@odata.nextlink")
             self.logger.info(
-                "Cornerstone page received api=%s resource=%s page=%s "
+                "Cornerstone API page received api=%s resource=%s page=%s "
                 "records=%s has_next_page=%s",
                 self.api,
                 self.resource,
@@ -421,48 +440,14 @@ class Cornerstone(Source):
             params = None
             headers = {}
 
-    def _iter_employee_records(self) -> Iterator[list[dict[str, Any]]]:
-        """Yield Employees v2 pages using the server-provided nextPageToken."""
-        url = self._url()
-        params = dict(self.query_params)
-        seen_tokens: set[str] = set()
-        page_number = 0
-
-        while url:
-            page_number += 1
-            body = self._request_json(url, params=params)
-            records = self._records_from_body(body)
-            next_token = body.get("nextPageToken")
-            self.logger.info(
-                "Cornerstone page received api=%s resource=%s page=%s "
-                "records=%s has_next_page=%s",
-                self.api,
-                self.resource,
-                page_number,
-                len(records),
-                bool(next_token),
-            )
-            if records:
-                yield records
-
-            if not next_token:
-                break
-            if next_token in seen_tokens:
-                message = "Cornerstone returned a repeated nextPageToken"
-                raise ValueError(message)
-            seen_tokens.add(next_token)
-            params = {**self.query_params, "nextPageToken": next_token}
-
     def _to_records(
         self, batch_size: int | None = 1000
     ) -> Iterator[list[dict[str, Any]]]:
-        """Lazily fetch and yield one server page at a time."""
-        if self.api == "employees":
-            yield from self._iter_employee_records()
-        else:
-            # Cornerstone caps OData pages at 10,000 records.
-            page_size = min(batch_size, 10_000) if batch_size is not None else None
-            yield from self._iter_odata_records(batch_size=page_size)
+        """Lazily fetch and yield one OData page at a time."""
+        self._ensure_object_resource()
+        # Cornerstone caps OData pages at 10,000 records.
+        page_size = min(batch_size, 10_000) if batch_size is not None else None
+        yield from self._iter_odata_records(batch_size=page_size)
 
     def _query_records(self) -> list[dict[str, Any]]:
         """Materialize endpoint records for DataFrame and JSON consumers."""
@@ -481,5 +466,7 @@ class Cornerstone(Source):
         return pd.DataFrame.from_records(records)
 
     def to_json(self) -> dict[str, Any]:
-        """Return all records in a JSON-compatible OData-style envelope."""
+        """Return records in an OData envelope, or XML text for metadata."""
+        if self.resource == "$metadata":
+            return {"metadata": self.get_metadata()}
         return {"value": self._query_records()}
