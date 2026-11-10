@@ -104,11 +104,7 @@ class Cornerstone(Source):
         credential_values = self._normalize_credential_keys(raw_credentials)
         validated_credentials = CornerstoneCredentials(**credential_values)
         if not validated_credentials.scope:
-            default_scope = (
-                "obj_metadata:read"
-                if resource == "$metadata"
-                else f"obj_{resource}:read"
-            )
+            default_scope = "all"
             validated_credentials = validated_credentials.model_copy(
                 update={"scope": default_scope}
             )
