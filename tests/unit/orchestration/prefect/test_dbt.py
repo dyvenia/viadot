@@ -14,6 +14,7 @@ from viadot.orchestration.prefect.tasks.dbt import (
     trigger_downstream_nodes,
     update_node_state,
 )
+from viadot.orchestration.prefect.tasks.dbt import utils as dbt_utils
 from viadot.orchestration.prefect.tasks.dbt.utils import (
     _iter_prefect_deployments,
     get_node_schedules_prefect_yaml,
@@ -790,6 +791,15 @@ class TestGetSourceConfigPrefectYaml:
 
     def test_unknown_node_returns_empty_list(self, deployments_dir):
         assert get_node_schedules_prefect_yaml("nonexistent", deployments_dir) == []
+
+    def test_skips_yaml_parsing_when_node_name_is_absent(
+        self, deployments_dir, monkeypatch
+    ):
+        load_yaml = MagicMock(wraps=dbt_utils._yaml.load)
+        monkeypatch.setattr(dbt_utils._yaml, "load", load_yaml)
+
+        assert get_node_schedules_prefect_yaml("missing_node", deployments_dir) == []
+        load_yaml.assert_not_called()
 
     def test_yaml_anchor_in_schedule_is_resolved(self, deployments_dir):
         schedules = get_node_schedules_prefect_yaml("raw_products", deployments_dir)

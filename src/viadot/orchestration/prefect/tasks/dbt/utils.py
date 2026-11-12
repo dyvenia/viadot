@@ -13,7 +13,9 @@ _yaml = YAML(typ="safe", pure=True)
 NODE_NAME_PARAM_NAMES = ["table", "redshift_table"]
 
 
-def _iter_prefect_deployments(deployments_dir: str | Path | None) -> Iterator[dict]:
+def _iter_prefect_deployments(
+    deployments_dir: str | Path | None, node_name: str | None = None
+) -> Iterator[dict]:
     """Yield deployments parsed from YAML files under ``deployments_dir``."""
     directory = Path(deployments_dir or "prefect/deployments").resolve()
     base_yaml = directory / "prefect_base.yaml"
@@ -27,7 +29,11 @@ def _iter_prefect_deployments(deployments_dir: str | Path | None) -> Iterator[di
         if yaml_file == base_yaml:
             continue
 
-        file_content = textwrap.indent(yaml_file.read_text().strip(), "  ")
+        raw_content = yaml_file.read_text()
+        if node_name is not None and node_name not in raw_content:
+            continue
+
+        file_content = textwrap.indent(raw_content.strip(), "  ")
         parsed_yaml = _yaml.load(base_content + "\n" + file_content)
         deployments = (
             parsed_yaml.get("deployments", [])
@@ -59,7 +65,7 @@ def get_node_schedules_prefect_yaml(
     logger = get_run_logger()
 
     logger.info(f"Retrieving node '{node_name}' schedule from Prefect deployments...")
-    for deployment in _iter_prefect_deployments(deployments_dir):
+    for deployment in _iter_prefect_deployments(deployments_dir, node_name=node_name):
         params = deployment.get("parameters", {})
         if not params:
             logger.warning(
