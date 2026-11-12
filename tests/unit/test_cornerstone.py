@@ -17,7 +17,6 @@ def _credentials():
         "base_url": BASE_URL,
         "client_id": "client-id",
         "client_secret": "client-secret",  # pragma: allowlist secret
-        "sa_name": "service-account",
     }
 
 
@@ -47,25 +46,36 @@ def _source(resource="users_core", **kwargs):
     return source
 
 
-def test_credentials_can_be_read_from_environment(monkeypatch):
-    monkeypatch.setenv("BASE_URL", BASE_URL)
-    monkeypatch.setenv("CLIENT_ID", "client-id")
-    monkeypatch.setenv("CLIENT_SECRET", "client-secret")
-    monkeypatch.setenv("SA_NAME", "service-account")
+def test_credentials_are_loaded_from_prefect_secret_and_variable(monkeypatch):
+    block_name = "cornerstone-api-credentials"
+    secret_credentials = {
+        "client_id": "client-id",
+        "client_secret": "client-secret",  # pragma: allowlist secret
+    }
+    get_credentials = MagicMock(return_value=secret_credentials)
+    monkeypatch.setattr("viadot.sources.cornerstone.get_credentials", get_credentials)
 
-    source = Cornerstone(resource="users_core")
+    source = Cornerstone(
+        resource="users_core",
+        credentials_secret=block_name,
+        base_url=BASE_URL,
+    )
 
+    get_credentials.assert_called_once_with(block_name)
     assert source.credentials["base_url"] == BASE_URL
-    assert source.credentials["sa_name"] == "service-account"
+    assert source.credentials["client_id"] == "client-id"
+    assert "sa_name" not in source.credentials
 
 
-def test_environment_credentials_report_missing_names(monkeypatch):
-    monkeypatch.delenv("BASE_URL", raising=False)
-    monkeypatch.delenv("CLIENT_ID", raising=False)
-    monkeypatch.delenv("CLIENT_SECRET", raising=False)
+def test_credentials_secret_must_contain_a_json_object(monkeypatch):
+    monkeypatch.setattr(
+        "viadot.sources.cornerstone.get_credentials",
+        MagicMock(return_value="not-a-json-object"),
+    )
 
-    with pytest.raises(ValueError, match="BASE_URL, CLIENT_ID, CLIENT_SECRET"):
-        Cornerstone(resource="users_core")
+    block_name = "cornerstone-api"
+    with pytest.raises(TypeError, match="must be a JSON object"):
+        Cornerstone(resource="users_core", credentials_secret=block_name)
 
 
 def test_token_request_uses_cornerstone_json_fields():
@@ -81,7 +91,7 @@ def test_token_request_uses_cornerstone_json_fields():
             "clientId": "client-id",
             "clientSecret": "client-secret",  # pragma: allowlist secret
             "grantType": "client_credentials",
-            "scope": "obj_users_core:read",
+            "scope": "all",
         },
         headers={"Content-Type": "application/json"},
         timeout=60,
@@ -162,33 +172,27 @@ def test_access_token_is_reused_until_shortly_before_expiry(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    ("resource", "expected_scope"),
+    "resource",
     [
-        ("users_core", "obj_users_core:read"),
-        ("users_cf_core", "obj_users_cf_core:read"),
-        ("user_ou_pivoted_core", "obj_user_ou_pivoted_core:read"),
-        ("user_ou_core", "obj_user_ou_core:read"),
-        ("ou_core", "obj_ou_core:read"),
-        ("user_cf_enum_local2_core", "obj_user_cf_enum_local2_core:read"),
-        ("posmgmt_position", "obj_posmgmt_position:read"),
-        (
-            "posmgmt_position_user_assignment",
-            "obj_posmgmt_position_user_assignment:read",
-        ),
-        ("posmgmt_position_relation", "obj_posmgmt_position_relation:read"),
-        (
-            "posmgmt_position_unit_assignment",
-            "obj_posmgmt_position_unit_assignment:read",
-        ),
-        ("posmgmt_position_status", "obj_posmgmt_position_status:read"),
-        ("posmgmt_position_cf", "obj_posmgmt_position_cf:read"),
-        ("$metadata", "obj_metadata:read"),
+        "users_core",
+        "users_cf_core",
+        "user_ou_pivoted_core",
+        "user_ou_core",
+        "ou_core",
+        "user_cf_enum_local2_core",
+        "posmgmt_position",
+        "posmgmt_position_user_assignment",
+        "posmgmt_position_relation",
+        "posmgmt_position_unit_assignment",
+        "posmgmt_position_status",
+        "posmgmt_position_cf",
+        "$metadata",
     ],
 )
-def test_default_scope_matches_deapi_resource(resource, expected_scope):
+def test_default_scope_is_all(resource):
     source = _source(resource=resource)
 
-    assert source._credentials.scope == expected_scope
+    assert source._credentials.scope == "all"
 
 
 def test_odata_pages_are_fetched_lazily_and_follow_next_link():
@@ -240,9 +244,7 @@ def test_metadata_resource_requests_and_returns_odata_xml():
 
     assert source.get_metadata() == '<edmx:Edmx Version="4.0" />'
     source._session.post.assert_called_once()
-    assert source._session.post.call_args.kwargs["json"]["scope"] == (
-        "obj_metadata:read"
-    )
+    assert source._session.post.call_args.kwargs["json"]["scope"] == "all"
     assert source._session.get.call_args.args[0] == (
         f"{BASE_URL}/services/api/x/dataexporter/api/objects/$metadata"
     )

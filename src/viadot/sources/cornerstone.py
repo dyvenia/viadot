@@ -1,7 +1,6 @@
 """Cornerstone API source connector."""
 
 from collections.abc import Iterator
-import os
 import time
 from typing import Any, ClassVar, Literal, cast
 from urllib.parse import quote, urlsplit
@@ -11,6 +10,7 @@ from pydantic import BaseModel, field_validator
 import requests
 
 from viadot.config import get_source_credentials
+from viadot.orchestration.prefect.utils import get_credentials
 from viadot.sources.base import Record, Source
 
 
@@ -26,7 +26,6 @@ class CornerstoneCredentials(BaseModel):
     base_url: str
     client_id: str
     client_secret: str
-    sa_name: str | None = None
     scope: str | None = None
 
     @field_validator("base_url")
@@ -49,9 +48,10 @@ class Cornerstone(Source):
     metadata XML. Object resources use the ``obj_<resource>:read`` scope;
     metadata uses ``obj_metadata:read``.
 
-    Credentials may be passed explicitly, loaded from a viadot ``config_key``, or
-    temporarily read from the environment variables ``BASE_URL``, ``CLIENT_ID``,
-    and ``CLIENT_SECRET``. ``SA_NAME`` is accepted as metadata; the OAuth client
+    Client credentials may be passed explicitly, loaded from a viadot ``config_key``,
+    or retrieved from a Prefect ``credentials_secret`` block. When credentials omit
+    ``base_url``, it is read from the Prefect Variable named by
+    ``base_url_variable`` (``cornerstone_base_url`` by default). The OAuth client
     credentials grant is bound to its service account at application registration.
     """
 
@@ -66,7 +66,9 @@ class Cornerstone(Source):
         api: API_TYPE = "deapi",
         query_params: dict[str, Any] | None = None,
         credentials: CornerstoneCredentials | dict[str, Any] | None = None,
+        credentials_secret: str | None = None,
         config_key: str | None = None,
+        base_url: str = "cornerstone_base_url",
         session: requests.Session | None = None,
         max_retries: int = 3,
         backoff_factor: float = 0.5,
@@ -80,7 +82,10 @@ class Cornerstone(Source):
             api: API family. Currently only ``"deapi"`` is supported.
             query_params: Optional OData or endpoint query parameters.
             credentials: Explicit Cornerstone credentials.
+            credentials_secret: Name of the Prefect Secret block containing the client
+                ID and client secret.
             config_key: viadot configuration key used when credentials are omitted.
+            base_url: The portal base URL.
             session: Optional requests session, useful for connection reuse/testing.
             max_retries: Maximum retries for 429 and transient 5xx responses.
             backoff_factor: Base exponential retry delay in seconds.
@@ -95,13 +100,22 @@ class Cornerstone(Source):
             message = "max_retries cannot be negative"
             raise ValueError(message)
 
-        raw_credentials = credentials
-        if raw_credentials is None and config_key:
-            raw_credentials = get_source_credentials(config_key)
-        if raw_credentials is None:
-            raw_credentials = self._credentials_from_environment()
+        raw_credentials = self._resolve_raw_credentials(
+            credentials,
+            config_key,
+            credentials_secret,
+        )
+        if not isinstance(raw_credentials, dict | CornerstoneCredentials):
+            message = "Cornerstone credentials must be a JSON object"
+            raise TypeError(message)
 
-        credential_values = self._normalize_credential_keys(raw_credentials)
+        credential_values = (
+            raw_credentials.model_dump()
+            if isinstance(raw_credentials, CornerstoneCredentials)
+            else dict(raw_credentials)
+        )
+        if not credential_values.get("base_url"):
+            credential_values["base_url"] = base_url
         validated_credentials = CornerstoneCredentials(**credential_values)
         if not validated_credentials.scope:
             default_scope = "all"
@@ -130,42 +144,26 @@ class Cornerstone(Source):
         )
 
     @staticmethod
-    def _credentials_from_environment() -> dict[str, str | None]:
-        """Read Cornerstone credentials from the process environment."""
-        names = {
-            "base_url": "BASE_URL",
-            "client_id": "CLIENT_ID",
-            "client_secret": "CLIENT_SECRET",  # pragma: allowlist secret
-            "sa_name": "SA_NAME",
-        }
-        values = {key: os.environ.get(env_name) for key, env_name in names.items()}
-        required = ("base_url", "client_id", "client_secret")
-        missing = [key for key in required if not values[key]]
-        if missing:
-            raise ValueError(
-                "Cornerstone credentials were not provided; set or pass: "
-                + ", ".join(names[key] for key in missing)
-            )
-        return values
+    def _resolve_raw_credentials(
+        credentials: CornerstoneCredentials | dict[str, Any] | None,
+        config_key: str | None,
+        credentials_secret: str | None,
+    ) -> CornerstoneCredentials | dict[str, Any] | str:
+        """Resolve credentials in order: explicit, viadot config, Prefect Secret."""
+        if credentials is not None:
+            return credentials
 
-    @staticmethod
-    def _normalize_credential_keys(
-        credentials: CornerstoneCredentials | dict[str, Any],
-    ) -> dict[str, Any]:
-        """Accept lowercase config keys and the environment variable names."""
-        if isinstance(credentials, CornerstoneCredentials):
-            return credentials.model_dump()
+        if config_key:
+            configured_credentials = get_source_credentials(config_key)
+            if configured_credentials is not None:
+                return configured_credentials
 
-        values = dict(credentials)
-        for key, env_name in (
-            ("base_url", "BASE_URL"),
-            ("client_id", "CLIENT_ID"),
-            ("client_secret", "CLIENT_SECRET"),
-            ("sa_name", "SA_NAME"),
-        ):
-            if key not in values and env_name in values:
-                values[key] = values.pop(env_name)
-        return values
+        secret_credentials = get_credentials(credentials_secret)
+        if secret_credentials is not None:
+            return secret_credentials
+
+        message = "Provide Cornerstone credentials or a credentials_secret name"
+        raise ValueError(message)
 
     @property
     def headers(self) -> dict[str, str]:
