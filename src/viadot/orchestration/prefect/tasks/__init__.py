@@ -30,6 +30,7 @@ from .matomo import matomo_to_df
 from .mediatool import mediatool_to_df
 from .mindful import mindful_to_df
 from .minio import df_to_minio
+from .mysql import mysql_to_df
 from .onestream import (
     create_batch_list_of_custom_subst_vars,
     onestream_run_data_management_seq,
@@ -98,6 +99,7 @@ __all__ = [
     "matomo_to_df",
     "mediatool_to_df",
     "mindful_to_df",
+    "mysql_to_df",
     "onestream_run_data_management_seq",
     "onestream_to_df",
     "outlook_to_df",
