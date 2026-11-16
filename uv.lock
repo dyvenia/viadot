@@ -8024,7 +8024,7 @@ wheels = [
 
 [[package]]
 name = "viadot2"
-version = "2.15.4"
+version = "2.16.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
