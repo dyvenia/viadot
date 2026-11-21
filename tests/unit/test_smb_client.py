@@ -21,6 +21,7 @@ from viadot.sources.smb_client import (
     _check_filename_for_problematic_chars,
     _ensure_smb_session,
     _get_unique_local_path,
+    _set_s3_extra_args,
 )
 
 
@@ -391,6 +392,25 @@ def test_stream_files_to_s3_with_prefix_levels(smb_client_instance):
 
         call_kwargs = mock_stream.call_args.kwargs
         assert call_kwargs["prefix_levels_to_add"] == 2
+
+
+def test_set_s3_extra_args_encodes_unc_path_when_enabled():
+    """SMB source path is stored as percent-encoded S3 user metadata."""
+    extra_args = _set_s3_extra_args(
+        r"\\test-server\test-share\data\file.txt",
+        set_smb_path_in_metadata=True,
+    )
+
+    assert extra_args == {
+        "Metadata": {
+            "smb-source-path": "%5C%5Ctest-server%5Ctest-share%5Cdata%5Cfile.txt",
+        }
+    }
+
+
+def test_set_s3_extra_args_skips_metadata_by_default():
+    """Metadata is omitted unless set_smb_path_in_metadata is enabled."""
+    assert _set_s3_extra_args(r"\\test-server\test-share\data\file.txt") is None
 
 
 # ==================== Helper function tests ====================
