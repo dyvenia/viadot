@@ -1,7 +1,9 @@
 """Manifest traversal logic for dbt dynamic orchestration."""
 
+from collections.abc import Callable
 import logging
 
+from viadot.exceptions import MissingStateEntryError
 from viadot.orchestration.dbt.state_handler import is_fresh
 
 
@@ -18,9 +20,31 @@ class ManifestHandler:
         manifest: The parsed dbt manifest dictionary.
     """
 
-    def __init__(self, manifest: dict) -> None:
-        """Initialize ManifestHandler with the given manifest dict."""
+    def __init__(
+        self,
+        manifest: dict,
+        state_tracked_nodes: set[str] | Callable[[], set[str]] | None = None,
+    ) -> None:
+        """Initialize with a manifest and tracked nodes or a lazy node loader."""
         self.manifest = manifest
+        self._state_tracked_nodes = (
+            state_tracked_nodes if isinstance(state_tracked_nodes, set) else None
+        )
+        self._state_tracked_nodes_loader = (
+            state_tracked_nodes if callable(state_tracked_nodes) else None
+        )
+
+    @property
+    def state_tracked_nodes(self) -> set[str]:
+        """Return tracked nodes, loading deployment configuration only when needed."""
+        if self._state_tracked_nodes is None:
+            self._state_tracked_nodes = (
+                self._state_tracked_nodes_loader()
+                if self._state_tracked_nodes_loader is not None
+                else set()
+            )
+            self._state_tracked_nodes_loader = None
+        return self._state_tracked_nodes
 
     def get_node_meta(self, node_name: str) -> dict:
         """Return the ``meta`` block for a dbt node (model or source).
@@ -101,6 +125,23 @@ class ManifestHandler:
         logger.info(f"Node '{node_name}' has direct downstream nodes: {downstreams}")
         return downstreams
 
+    def _get_upstream_status(
+        self, node_name: str, downstream_node: str, state: dict
+    ) -> tuple[list[str], list[str]]:
+        """Return stale and missing tracked upstreams for one downstream node."""
+        stale_upstreams: list[str] = []
+        missing_upstreams: list[str] = []
+        for upstream in self.get_upstreams(downstream_node):
+            if upstream == node_name:
+                continue
+            if upstream not in state:
+                if upstream in self.state_tracked_nodes:
+                    missing_upstreams.append(upstream)
+                continue
+            if not is_fresh(upstream, state):
+                stale_upstreams.append(upstream)
+        return stale_upstreams, missing_upstreams
+
     def get_runnable_nodes(
         self, node_name: str, state: dict
     ) -> tuple[list[str], dict[str, list[str]]]:
@@ -124,15 +165,25 @@ class ManifestHandler:
         downstream_nodes = self.get_direct_downstream_nodes(node_name)
         runnable: list[str] = []
         stale: dict[str, list[str]] = {}
+        missing_entries: dict[str, list[str]] = {}
         for node in downstream_nodes:
-            stale_upstreams = [
-                u
-                for u in self.get_upstreams(node)
-                if u != node_name and not is_fresh(u, state)
-            ]
+            stale_upstreams, missing_upstreams = self._get_upstream_status(
+                node_name, node, state
+            )
             if stale_upstreams:
                 stale[node] = stale_upstreams
-            else:
+            if missing_upstreams:
+                missing_entries[node] = missing_upstreams
+            elif not stale_upstreams:
                 runnable.append(node)
         logger.info("Runnable downstream nodes selection finished.")
+        if missing_entries:
+            first_downstream, first_upstreams = next(iter(missing_entries.items()))
+            raise MissingStateEntryError(
+                first_upstreams[0],
+                first_downstream,
+                missing_entries=missing_entries,
+                runnable_nodes=runnable,
+                stale_nodes=stale,
+            )
         return runnable, stale

@@ -9,11 +9,15 @@ from prefect import get_run_logger, task
 from prefect.deployments import run_deployment
 from prefect.exceptions import ObjectNotFound
 
+from viadot.exceptions import MissingStateEntryError
 from viadot.orchestration.dbt.artifact_store import ArtifactStore
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
 from viadot.orchestration.dbt.state_handler import StateHandler
 from viadot.orchestration.dbt.state_store import StateStore
-from viadot.orchestration.prefect.tasks.dbt.utils import get_node_schedules_prefect_yaml
+from viadot.orchestration.prefect.tasks.dbt.utils import (
+    get_node_schedules_prefect_yaml,
+    get_state_tracked_nodes_prefect_yaml,
+)
 from viadot.orchestration.prefect.utils import shell_run_command
 
 
@@ -161,6 +165,7 @@ def trigger_downstream_nodes(
     manifest: dict,
     state_path: str,
     state_store_credentials: dict[str, Any],
+    deployments_dir: str | Path | None = None,
     flow_name: str = "Transform and Catalog",
     tags: list[str] | None = None,
     on_missing_downstream_deployment: Literal["warn", "raise"] = "raise",
@@ -173,6 +178,7 @@ def trigger_downstream_nodes(
         manifest: The dbt manifest dictionary.
         state_path: URI of the state file (e.g. ``"s3://bucket/state.json"``).
         state_store_credentials: AWS credentials for the state store.
+        deployments_dir: Directory containing Prefect deployment YAML files.
         flow_name: The name of the Prefect flow that owns the downstream deployments.
         tags: Optional list of tags to apply to triggered deployments.
         on_missing_downstream_deployment: Behavior when a downstream Prefect
@@ -187,8 +193,18 @@ def trigger_downstream_nodes(
     )
     state, _ = store._read()
 
-    handler = ManifestHandler(manifest)
-    nodes_to_run, stale_nodes = handler.get_runnable_nodes(node_name, state)
+    handler = ManifestHandler(
+        manifest,
+        state_tracked_nodes=lambda: get_state_tracked_nodes_prefect_yaml(
+            deployments_dir
+        ),
+    )
+    missing_state_error: MissingStateEntryError | None = None
+    try:
+        nodes_to_run, stale_nodes = handler.get_runnable_nodes(node_name, state)
+    except MissingStateEntryError as error:
+        missing_state_error = error
+        nodes_to_run, stale_nodes = error.runnable_nodes, error.stale_nodes
 
     if stale_nodes:
         logger.warning(
@@ -200,6 +216,7 @@ def trigger_downstream_nodes(
         )
     if nodes_to_run:
         logger.info("Triggering downstream nodes ...")
+        missing_deployments: list[str] = []
         for node in nodes_to_run:
             # Use ``timeout=0`` so flow metadata is returned immediately.
             deployment_name = f"{flow_name}/dbt_{node}"
@@ -212,8 +229,24 @@ def trigger_downstream_nodes(
                         deployment_name,
                     )
                     continue
-                raise
+                missing_deployments.append(deployment_name)
+        if missing_state_error:
+            raise MissingStateEntryError(
+                missing_state_error.upstream,
+                missing_state_error.downstream,
+                missing_entries=missing_state_error.missing_entries,
+                runnable_nodes=nodes_to_run,
+                stale_nodes=stale_nodes,
+                missing_deployments=missing_deployments,
+            ) from missing_state_error
+        if missing_deployments:
+            message = (
+                f"Missing downstream deployments: {', '.join(missing_deployments)}."
+            )
+            raise ObjectNotFound(RuntimeError(message), help_message=message)
         return
+    if missing_state_error:
+        raise missing_state_error
     logger.info(
         "No nodes to trigger. All downstream nodes are either up to date or "
         "no downstream nodes exist."

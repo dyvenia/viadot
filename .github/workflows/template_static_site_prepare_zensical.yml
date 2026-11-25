@@ -37,16 +37,16 @@ jobs:
     runs-on: ${{ inputs.runs_on }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # --- Tool setup ---
       - name: Set up uv
         if: ${{ inputs.project_manager == 'uv' }}
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
 
       - name: Set up rye
         if: ${{ inputs.project_manager == 'rye' }}
-        uses: eifinger/setup-rye@v4
+        uses: eifinger/setup-rye@c694239a43768373e87d0103d7f547027a23f3c8 # v4.2.9
 
       # --- Sync dependencies ---
       - name: Sync dependencies uv
@@ -68,7 +68,7 @@ jobs:
 
       # --- Deploy Site ---
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4.8.0
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
         with:
           branch: ${{ inputs.static_site_branch }}
           folder: ${{ inputs.site_dir }}

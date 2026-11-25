@@ -7,14 +7,18 @@ from dateutil.relativedelta import relativedelta
 from prefect.exceptions import ObjectNotFound
 import pytest
 
+from viadot.exceptions import MissingStateEntryError
 from viadot.orchestration.dbt.manifest_handler import ManifestHandler
 from viadot.orchestration.dbt.state_handler import SLAParseError, StateHandler, is_fresh
 from viadot.orchestration.prefect.tasks.dbt import (
     trigger_downstream_nodes,
     update_node_state,
 )
+from viadot.orchestration.prefect.tasks.dbt import utils as dbt_utils
 from viadot.orchestration.prefect.tasks.dbt.utils import (
+    _iter_prefect_deployments,
     get_node_schedules_prefect_yaml,
+    get_state_tracked_nodes_prefect_yaml,
 )
 
 
@@ -203,6 +207,37 @@ class TestGetDirectDownstreamNodes:
 
 
 class TestGetRunnableNodes:
+    def test_defers_state_tracked_node_lookup_until_upstream_state_is_missing(
+        self, manifest
+    ):
+        load_tracked_nodes = MagicMock(return_value={"raw_products"})
+        handler = ManifestHandler(manifest, state_tracked_nodes=load_tracked_nodes)
+        state = {"raw_products": {"fresh_until": "2099-01-01T00:00:00+00:00"}}
+
+        runnable, stale = handler.get_runnable_nodes("raw_orders", state)
+
+        assert set(runnable) == {"int_orders", "int_order_items"}
+        assert stale == {}
+        load_tracked_nodes.assert_not_called()
+
+    def test_loads_state_tracked_nodes_for_missing_upstream(self, manifest):
+        load_tracked_nodes = MagicMock(return_value={"int_customers"})
+        handler = ManifestHandler(manifest, state_tracked_nodes=load_tracked_nodes)
+
+        with pytest.raises(MissingStateEntryError):
+            handler.get_runnable_nodes("int_orders", state={})
+
+        load_tracked_nodes.assert_called_once_with()
+
+    def test_configured_downstream_without_state_entry_is_runnable(self, manifest):
+        runnable, stale = ManifestHandler(
+            manifest, state_tracked_nodes={"int_orders"}
+        ).get_runnable_nodes("raw_orders", state={})
+
+        # int_orders is the current node, so it's fresh by definition.
+        assert "int_orders" in runnable
+        assert stale == {}
+
     def test_all_upstreams_fresh_returns_all_direct_downstreams(self, manifest):
         state = {"raw_products": {"fresh_until": "2099-01-01T00:00:00+00:00"}}
         runnable, stale = ManifestHandler(manifest).get_runnable_nodes(
@@ -241,6 +276,54 @@ class TestGetRunnableNodes:
         runnable, stale = ManifestHandler(manifest).get_runnable_nodes("int_orders", {})
         assert "mart_sales" in runnable
         assert stale == {}
+
+    def test_missing_state_tracked_upstream_raises(self, manifest):
+        with pytest.raises(
+            MissingStateEntryError,
+            match="State-tracked upstream 'int_customers' has no state-table entry",
+        ):
+            ManifestHandler(
+                manifest, state_tracked_nodes={"int_customers"}
+            ).get_runnable_nodes("int_orders", {})
+
+    def test_missing_upstream_without_state_tracking_does_not_raise(self, manifest):
+        """Test that missing upstream without state tracking does not raise an error.
+
+        The example used is 'int_customers', which is missing from the state, but
+        because it's not state-tracked, it does not raise an error, which means
+        'mart_sales' can still be run.
+        """
+        manifest["nodes"]["model.lakehouse.int_customers"]["meta"] = {"SLA": "24h"}
+        runnable, stale = ManifestHandler(manifest).get_runnable_nodes("int_orders", {})
+
+        assert runnable == ["mart_sales"]
+        assert stale == {}
+
+    def test_evaluates_other_downstreams_after_missing_tracked_upstreams(
+        self, manifest
+    ):
+        manifest["nodes"]["model.lakehouse.int_orders_audit"] = {
+            "resource_type": "model",
+            "name": "int_orders_audit",
+            "depends_on": {
+                "nodes": [
+                    "source.lakehouse.staging.raw_orders",
+                    "source.lakehouse.staging.raw_customers",
+                ]
+            },
+        }
+        handler = ManifestHandler(
+            manifest, state_tracked_nodes={"raw_products", "raw_customers"}
+        )
+
+        with pytest.raises(MissingStateEntryError) as error:
+            handler.get_runnable_nodes("raw_orders", {})
+
+        assert error.value.missing_entries == {
+            "int_order_items": ["raw_products"],
+            "int_orders_audit": ["raw_customers"],
+        }
+        assert error.value.runnable_nodes == ["int_orders"]
 
 
 # ---------------------------------------------------------------------------
@@ -709,6 +792,15 @@ class TestGetSourceConfigPrefectYaml:
     def test_unknown_node_returns_empty_list(self, deployments_dir):
         assert get_node_schedules_prefect_yaml("nonexistent", deployments_dir) == []
 
+    def test_skips_yaml_parsing_when_node_name_is_absent(
+        self, deployments_dir, monkeypatch
+    ):
+        load_yaml = MagicMock(wraps=dbt_utils._yaml.load)
+        monkeypatch.setattr(dbt_utils._yaml, "load", load_yaml)
+
+        assert get_node_schedules_prefect_yaml("missing_node", deployments_dir) == []
+        load_yaml.assert_not_called()
+
     def test_yaml_anchor_in_schedule_is_resolved(self, deployments_dir):
         schedules = get_node_schedules_prefect_yaml("raw_products", deployments_dir)
         assert len(schedules) == 1
@@ -720,6 +812,49 @@ class TestGetSourceConfigPrefectYaml:
         assert len(schedules) == 1
         assert schedules[0]["cron"] == "0 3 * * *"
         assert schedules[0]["timezone"] == "Europe/Warsaw"
+
+    def test_iterates_deployments_from_all_files_with_base_anchors(
+        self, deployments_dir
+    ):
+        deployments = list(_iter_prefect_deployments(deployments_dir))
+
+        assert {deployment["name"] for deployment in deployments} == {
+            "ingest-raw-orders",
+            "ingest-raw-customers",
+            "ingest-raw-products",
+            "dbt-int-orders",
+        }
+        assert next(
+            deployment
+            for deployment in deployments
+            if deployment["name"] == "ingest-raw-products"
+        )["schedules"] == [
+            {
+                "cron": "0 0 * * *",
+                "timezone": "Europe/Warsaw",
+                "active": False,
+            }
+        ]
+
+    def test_returns_nodes_with_state_tracking_enabled(self, deployments_dir):
+        (deployments_dir / "transform" / "dbt.yaml").write_text(
+            textwrap.dedent(
+                """\
+                - name: dbt-int-customers
+                  parameters:
+                    model_name: int_customers
+                    track_state: true
+                - name: dbt-int-orders
+                  parameters:
+                    model_name: int_orders
+                    track_state: false
+                """
+            )
+        )
+
+        assert get_state_tracked_nodes_prefect_yaml(deployments_dir) == {
+            "int_customers"
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -919,13 +1054,18 @@ class TestTriggerDownstreamNodes:
     @pytest.fixture(autouse=True)
     def _mock_logger(self, monkeypatch):
         monkeypatch.setattr(f"{_MODULE}.get_run_logger", MagicMock)
+        monkeypatch.setattr(f"{_DC_MODULE}.get_run_logger", MagicMock)
 
     def test_triggers_run_deployment_for_each_runnable_node(
         self, monkeypatch, manifest
     ):
         mock_run = MagicMock()
+        load_tracked_nodes = MagicMock(return_value=set())
         mock_store_instance = MagicMock()
         mock_store_instance._read.return_value = ({}, "etag1")
+        monkeypatch.setattr(
+            f"{_MODULE}.get_state_tracked_nodes_prefect_yaml", load_tracked_nodes
+        )
         monkeypatch.setattr(
             f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
         )
@@ -951,6 +1091,7 @@ class TestTriggerDownstreamNodes:
             ]
         )
         assert mock_run.call_count == 2
+        load_tracked_nodes.assert_not_called()
 
     def test_does_not_trigger_when_no_runnable_nodes(self, monkeypatch, manifest):
         mock_run = MagicMock()
@@ -974,6 +1115,67 @@ class TestTriggerDownstreamNodes:
         )
 
         mock_run.assert_not_called()
+
+    def test_surfaces_missing_state_tracked_upstream(
+        self, monkeypatch, manifest, tmp_path
+    ):
+        (tmp_path / "dbt.yaml").write_text(
+            textwrap.dedent(
+                """\
+                - name: dbt-int-customers
+                  parameters:
+                    model_name: int_customers
+                    track_state: true
+                """
+            )
+        )
+        mock_store_instance = MagicMock()
+        mock_store_instance._read.return_value = ({}, "etag1")
+        mock_run = MagicMock()
+        monkeypatch.setattr(
+            f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
+        )
+        monkeypatch.setattr(f"{_MODULE}.run_deployment", mock_run)
+
+        with pytest.raises(MissingStateEntryError):
+            trigger_downstream_nodes.fn(
+                node_name="int_orders",
+                manifest=manifest,
+                state_path="s3://bucket/node-state.json",
+                state_store_credentials={"token": "x"},
+                deployments_dir=tmp_path,
+            )
+
+        mock_run.assert_not_called()
+
+    def test_triggers_runnable_nodes_before_raising_missing_state_error(
+        self, monkeypatch, manifest
+    ):
+        mock_run = MagicMock()
+        mock_store_instance = MagicMock()
+        mock_store_instance._read.return_value = ({}, "etag1")
+        monkeypatch.setattr(
+            f"{_MODULE}.StateStore", MagicMock(return_value=mock_store_instance)
+        )
+        monkeypatch.setattr(f"{_MODULE}.run_deployment", mock_run)
+        monkeypatch.setattr(
+            f"{_MODULE}.get_state_tracked_nodes_prefect_yaml",
+            lambda deployments_dir: {"raw_products"},
+        )
+
+        with pytest.raises(
+            MissingStateEntryError, match=r"int_order_items: raw_products"
+        ):
+            trigger_downstream_nodes.fn(
+                node_name="raw_orders",
+                manifest=manifest,
+                state_path="s3://bucket/node-state.json",
+                state_store_credentials={"token": "x"},
+            )
+
+        mock_run.assert_called_once_with(
+            name="Transform and Catalog/dbt_int_orders", timeout=0, tags=None
+        )
 
     def test_warns_and_continues_when_downstream_deployment_missing(
         self, monkeypatch, manifest
@@ -1019,7 +1221,10 @@ class TestTriggerDownstreamNodes:
     def test_raises_when_downstream_deployment_missing_in_raise_mode(
         self, monkeypatch, manifest
     ):
-        mock_run = MagicMock(side_effect=ObjectNotFound("missing"))
+        missing_deployment = ObjectNotFound(
+            RuntimeError("missing"), help_message="missing"
+        )
+        mock_run = MagicMock(side_effect=[missing_deployment, None])
         mock_store_instance = MagicMock()
         mock_store_instance._read.return_value = ({}, "etag1")
         monkeypatch.setattr(
@@ -1029,10 +1234,10 @@ class TestTriggerDownstreamNodes:
         monkeypatch.setattr(
             ManifestHandler,
             "get_runnable_nodes",
-            lambda self, n, s: (["int_orders"], {}),
+            lambda self, n, s: (["int_orders", "int_items"], {}),
         )
 
-        with pytest.raises(ObjectNotFound):
+        with pytest.raises(ObjectNotFound, match="dbt_int_orders"):
             trigger_downstream_nodes.fn(
                 node_name="raw_orders",
                 manifest=manifest,
@@ -1040,3 +1245,4 @@ class TestTriggerDownstreamNodes:
                 state_store_credentials={"token": "x"},
                 flow_name="transform-flow",
             )
+        assert mock_run.call_count == 2

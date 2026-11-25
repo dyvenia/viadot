@@ -88,18 +88,20 @@ Commit messages should:
 
 ## Submitting a PR
 
-1. [Fork the repo](https://github.com/dyvenia/viadot/fork)
-2. Uncheck the "Copy the `main` branch only" box
-3. Follow the setup outlined above
-4. Checkout a new branch
+If you only have read-only access to the repository, fork it first and submit the PR
+from your fork. Contributors with write access can work directly from a branch in the
+repository.
+
+1. If you have read-only access, [fork the repo](https://github.com/dyvenia/viadot/fork)
+   and uncheck the "Copy the `main` branch only" box.
+2. Check out a new branch
 
    ```console
-   # Make sure that your base branch is `main`.
    git switch main && git checkout -b <name>
    ```
 
-5. Add your changes
-6. Sync your fork with the `dyvenia` repo
+3. Add your changes.
+4. If you are working from a fork, sync it with the `dyvenia` repo:
 
    ```console
    git remote add upstream https://github.com/dyvenia/viadot.git
@@ -108,13 +110,17 @@ Commit messages should:
    git rebase upstream/main
    ```
 
-7. Push the changes to your fork
+5. Push your branch:
 
    ```console
-   git push --force
+   # For a fork:
+   git push --force origin <name>
+
+   # For a branch in the viadot repository:
+   git push origin <name>
    ```
 
-8. [Submit a PR](https://github.com/dyvenia/viadot/compare/yourbranch...main) into the `main` branch.
+6. [Submit a PR](https://github.com/dyvenia/viadot/compare/yourbranch...main) into the `main` branch.
 
    Make sure to read & check all relevant checkboxes in the PR description!
 

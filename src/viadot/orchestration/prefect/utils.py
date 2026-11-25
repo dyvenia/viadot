@@ -251,7 +251,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
             (default: 30).
         trigger_downstream_nodes (bool): Whether to trigger downstream nodes
             (default: False).
-        trigger_downstream_nodes_delay (int): Delay in seconds before triggering
+        trigger_downstream_nodes_delay (int): Delay in minutes before triggering
             (default: 0).
         trigger_downstream_nodes_tags (list[str] | None): Optional tags to apply to
             triggered downstream deployments (default: None).
@@ -398,6 +398,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                         state_store_credentials=state_update_params[
                             "state_store_credentials"
                         ],
+                        deployments_dir=options["deployments_dir"],
                         tags=options["trigger_downstream_nodes_tags"],
                         on_missing_downstream_deployment=cast(
                             Literal["warn", "raise"],
@@ -419,6 +420,7 @@ def with_state_tracking_and_downstream_triggering(  # noqa: C901
                     state_store_credentials=state_update_params[
                         "state_store_credentials"
                     ],
+                    deployments_dir=options["deployments_dir"],
                     tags=options["trigger_downstream_nodes_tags"],
                     on_missing_downstream_deployment=cast(
                         Literal["warn", "raise"],
